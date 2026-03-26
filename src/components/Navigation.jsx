@@ -76,9 +76,9 @@ export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onN
         </div>
       </div>
 
-      {/* ── Bottom portfolio switcher — always visible ── */}
+      {/* ── Bottom portfolio switcher — below mobile menu ── */}
       <div
-        className={`fixed bottom-6 left-0 right-0 z-30 flex justify-center gap-3 px-6 transition-opacity duration-1000 ${
+        className={`fixed bottom-6 left-0 right-0 z-20 flex justify-center gap-3 px-6 transition-opacity duration-1000 ${
           hidden ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
       >

@@ -57,13 +57,13 @@ export default function App() {
 
       <Logo loading={uiState.loading} />
 
-      {/* Tagline — desktop only, aligns top with logo */}
+      {/* Header — full width, always visible, above mobile menu */}
       <div
-        className={`fixed top-[30px] right-0 z-30 pointer-events-none hidden md:block transition-opacity duration-1000 ${
+        className={`fixed top-0 left-0 right-0 z-40 pointer-events-none border-b border-white transition-opacity duration-1000 ${
           uiState.loading || uiState.isZoomed ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <p className="text-white text-xl leading-none px-4">
+        <p className="text-white text-xl leading-none text-center py-[22px]">
           Andy Weitzel&nbsp;&nbsp;—&nbsp;&nbsp;Creative Director
         </p>
       </div>
