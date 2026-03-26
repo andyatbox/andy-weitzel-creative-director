@@ -51,25 +51,18 @@ export default function ProjectOverlay({ open, project, onClose }) {
   // Reset slider to first slide when project opens
   useEffect(() => {
     setSlideIndex(0)
-    if (open && slideRefs.current[0]) {
+    if (open && sliderRef.current) {
       const t = setTimeout(() => {
-        const img = slideRefs.current[0]
-        if (!img) return
-        // Center the first slide horizontally
-        img.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' })
-        // scrollIntoView may have scrolled the overlay vertically — restore to top
-        let el = img.parentElement
-        while (el) {
-          if (el.scrollTop > 0) { el.scrollTop = 0; break }
-          el = el.parentElement
-        }
+        if (sliderRef.current) sliderRef.current.scrollLeft = 0
       }, 50)
       return () => clearTimeout(t)
     }
   }, [open, p?.title])
 
   const goToSlide = (i) => {
-    slideRefs.current[i]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    if (sliderRef.current) {
+      sliderRef.current.scrollTo({ left: i * sliderRef.current.clientWidth, behavior: 'smooth' })
+    }
     setSlideIndex(i)
   }
 
@@ -109,18 +102,22 @@ export default function ProjectOverlay({ open, project, onClose }) {
             <div className="w-full mb-12">
               <div
                 ref={sliderRef}
-                className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-6"
+                className="flex overflow-x-auto snap-x snap-mandatory"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {p.gallery.map((img, i) => (
-                  <img
+                  <div
                     key={i}
                     ref={el => { slideRefs.current[i] = el }}
-                    src={img.url}
-                    alt={img.alt || ''}
-                    className="snap-center flex-none max-h-[60vh] w-auto"
-                    style={{ maxWidth: '70vw' }}
-                  />
+                    className="snap-start flex-none w-full flex justify-center px-6"
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.alt || ''}
+                      className="max-h-[60vh] w-auto"
+                      style={{ maxWidth: '70vw' }}
+                    />
+                  </div>
                 ))}
               </div>
               {p.gallery.length > 1 && (
