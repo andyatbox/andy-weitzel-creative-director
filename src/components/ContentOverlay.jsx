@@ -1,4 +1,14 @@
+import { useRef, useEffect } from 'react'
+
 export default function ContentOverlay({ open, onClose, children }) {
+  const scrollRef = useRef(null)
+
+  useEffect(() => {
+    if (open && scrollRef.current) {
+      scrollRef.current.scrollTop = 0
+    }
+  }, [open])
+
   return (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-500 ${
@@ -24,6 +34,7 @@ export default function ContentOverlay({ open, onClose, children }) {
 
       {/* Scrollable content — slides up on open */}
       <div
+        ref={scrollRef}
         className={`relative z-10 h-full overflow-y-auto transition-all duration-500 ${
           open ? 'translate-y-0' : 'translate-y-6'
         }`}
