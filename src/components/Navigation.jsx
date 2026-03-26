@@ -40,7 +40,7 @@ export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onN
 
       {/* ── Mobile: hamburger button ── */}
       <button
-        className={`ui-element md:hidden fixed top-4 right-4 z-40 w-[44px] h-[44px] flex items-center justify-center text-white transition-opacity duration-1000 ${
+        className={`ui-element md:hidden fixed top-[54px] right-4 z-40 w-[44px] h-[44px] flex items-center justify-center text-white transition-opacity duration-1000 ${
           hidden ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
         onClick={onMenuToggle}
