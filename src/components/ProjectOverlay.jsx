@@ -51,9 +51,18 @@ export default function ProjectOverlay({ open, project, onClose }) {
   // Reset slider to first slide when project opens
   useEffect(() => {
     setSlideIndex(0)
-    if (open && sliderRef.current) {
+    if (open && slideRefs.current[0]) {
       const t = setTimeout(() => {
-        if (sliderRef.current) sliderRef.current.scrollLeft = 0
+        const img = slideRefs.current[0]
+        if (!img) return
+        // Center the first slide horizontally
+        img.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' })
+        // scrollIntoView may have scrolled the overlay vertically — restore to top
+        let el = img.parentElement
+        while (el) {
+          if (el.scrollTop > 0) { el.scrollTop = 0; break }
+          el = el.parentElement
+        }
       }, 50)
       return () => clearTimeout(t)
     }
