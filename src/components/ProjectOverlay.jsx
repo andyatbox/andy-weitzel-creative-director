@@ -51,7 +51,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
   useEffect(() => { setSlideIndex(0) }, [p?.title])
 
   const goToSlide = (i) => {
-    slideRefs.current[i]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
+    slideRefs.current[i]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
     setSlideIndex(i)
   }
 
@@ -99,7 +99,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
                     ref={el => { slideRefs.current[i] = el }}
                     src={img.url}
                     alt={img.alt || ''}
-                    className="snap-start flex-none h-[60vh] object-cover"
+                    className="snap-center flex-none h-[60vh] object-cover"
                     style={{ maxWidth: '70vw' }}
                   />
                 ))}

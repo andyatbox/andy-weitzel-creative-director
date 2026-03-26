@@ -335,11 +335,15 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       state.isPointerDragging = false
       state.lastInputTime = Date.now()
 
-      if (Math.abs(e.clientX - state.downX) < 5 && Math.abs(e.clientY - state.downY) < 5) {
+      const tapThreshold = e.pointerType === 'touch' ? 12 : 5
+      if (Math.abs(e.clientX - state.downX) < tapThreshold && Math.abs(e.clientY - state.downY) < tapThreshold) {
         if (state.isZoomed) {
           actionsRef.current.unzoom?.()
           return
         }
+        // Recalculate pointer from tap position — pointermove may not have fired on touch
+        pointer.x = (e.clientX / window.innerWidth) * 2 - 1
+        pointer.y = -(e.clientY / window.innerHeight) * 2 + 1
         raycaster.setFromCamera(pointer, camera)
         const intersects = raycaster.intersectObjects(items.map(i => i.baseMesh))
         if (intersects.length > 0) {
