@@ -46,13 +46,14 @@ export default function ProjectOverlay({ open, project, onClose }) {
 
   const [slideIndex, setSlideIndex] = useState(0)
   const slideRefs = useRef([])
+  const sliderRef = useRef(null)
 
-  // Reset slider and scroll to first slide when project opens
+  // Reset slider to first slide when project opens
   useEffect(() => {
     setSlideIndex(0)
-    if (open && p?.gallery?.length > 0) {
+    if (open && sliderRef.current) {
       const t = setTimeout(() => {
-        slideRefs.current[0]?.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' })
+        if (sliderRef.current) sliderRef.current.scrollLeft = 0
       }, 50)
       return () => clearTimeout(t)
     }
@@ -98,6 +99,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
           {p.gallery?.length > 0 && (
             <div className="w-full mb-12">
               <div
+                ref={sliderRef}
                 className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-6"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
