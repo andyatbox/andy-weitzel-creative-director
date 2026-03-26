@@ -1,8 +1,11 @@
-const NAV_ITEMS = [
+const TOP_NAV_ITEMS = [
   { label: "Andy Weitzel's CV", type: 'cv' },
+  { label: 'Contact', type: 'contact' },
+]
+
+const PORTFOLIO_ITEMS = [
   { label: 'Interactive Experiences', col: 1 },
   { label: 'Branding & Print', col: 0 },
-  { label: 'Contact', type: 'contact' },
 ]
 
 export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onNavClick, onMenuToggle, onCvClick, onContactClick }) {
@@ -23,20 +26,15 @@ export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onN
         }`}
       >
         <div className="flex flex-row gap-8 items-center">
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.type === undefined && activeCol === item.col
-            return (
-              <div
-                key={item.label}
-                className={`ui-element cursor-pointer text-[1.5rem] leading-normal text-white transition-all ${
-                  isActive ? 'border-b-4 border-white' : 'hover:border-b-4 hover:border-white/50'
-                }`}
-                onClick={() => handleClick(item)}
-              >
-                {item.label}
-              </div>
-            )
-          })}
+          {TOP_NAV_ITEMS.map((item) => (
+            <div
+              key={item.label}
+              className="ui-element cursor-pointer text-[1.5rem] leading-normal text-white transition-all hover:border-b-4 hover:border-white/50"
+              onClick={() => handleClick(item)}
+            >
+              {item.label}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -66,21 +64,35 @@ export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onN
       >
         <div className="absolute inset-0 bg-black/55 backdrop-blur-md" />
         <div className="relative z-10 flex flex-col items-start gap-4 pt-[120px] pl-[30px]">
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.type === undefined && activeCol === item.col
-            return (
-              <div
-                key={item.label}
-                className={`ui-element cursor-pointer text-[8vw] leading-[8vw] text-white transition-all ${
-                  isActive ? 'border-b-4 border-white' : ''
-                }`}
-                onClick={() => { handleClick(item); onMenuToggle() }}
-              >
-                {item.label}
-              </div>
-            )
-          })}
+          {TOP_NAV_ITEMS.map((item) => (
+            <div
+              key={item.label}
+              className="ui-element cursor-pointer text-[8vw] leading-[8vw] text-white"
+              onClick={() => { handleClick(item); onMenuToggle() }}
+            >
+              {item.label}
+            </div>
+          ))}
         </div>
+      </div>
+
+      {/* ── Bottom portfolio switcher — always visible ── */}
+      <div
+        className={`fixed bottom-6 left-0 right-0 z-30 flex justify-center gap-3 px-6 transition-opacity duration-1000 ${
+          hidden ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        }`}
+      >
+        {PORTFOLIO_ITEMS.map((item) => (
+          <button
+            key={item.label}
+            onClick={() => onNavClick(item.col)}
+            className={`ui-element flex-1 max-w-xs px-6 py-3 rounded-full text-white text-xl transition-all backdrop-blur-md ${
+              activeCol === item.col ? 'bg-black/60' : 'bg-black/30'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
     </>
   )
