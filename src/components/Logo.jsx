@@ -3,7 +3,7 @@ export default function Logo({ loading }) {
     <div
       className="fixed pointer-events-none p-3 z-50 transition-all duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
       style={{
-        top: loading ? '50%' : '30px',
+        top: loading ? '50%' : '54px',
         left: loading ? '50%' : '30px',
         transform: loading ? 'translate(-50%, -50%) scale(1.5)' : 'translate(0, 0) scale(1)',
         width: '15vw',

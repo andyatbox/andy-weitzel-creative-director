@@ -63,7 +63,7 @@ export default function App() {
           uiState.loading || uiState.isZoomed ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <p className="text-white text-xl leading-none text-center py-[22px]">
+        <p className="text-white text-xl leading-none text-center py-3">
           Andy Weitzel&nbsp;&nbsp;—&nbsp;&nbsp;Creative Director
         </p>
       </div>

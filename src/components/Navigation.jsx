@@ -21,7 +21,7 @@ export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onN
     <>
       {/* ── Desktop nav: top-right ── */}
       <div
-        className={`fixed top-[50px] right-0 p-4 z-30 hidden md:block transition-opacity duration-1000 ${
+        className={`fixed top-[54px] right-0 p-4 z-30 hidden md:block transition-opacity duration-1000 ${
           hidden ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
       >
