@@ -57,13 +57,13 @@ export default function ProjectOverlay({ open, project, onClose }) {
         >
 
           {/* Title */}
-          <div className="max-w-4xl mx-auto px-6 mb-12">
+          <div className="max-w-7xl mx-auto px-6 mb-12">
             <h1 className="text-6xl md:text-8xl leading-none">{p.title}</h1>
           </div>
 
           {/* Vimeo embed */}
           {vimeoId && (
-            <div className="max-w-4xl mx-auto px-6 mb-12">
+            <div className="max-w-7xl mx-auto px-6 mb-12">
               <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                 <iframe
                   src={`https://player.vimeo.com/video/${vimeoId}?color=ffffff&title=0&byline=0&portrait=0`}
@@ -104,7 +104,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
 
           {/* Columns content */}
           {p.columnsContent?.length > 0 && (
-            <div className="max-w-4xl mx-auto px-6 space-y-12">
+            <div className="max-w-7xl mx-auto px-6 space-y-12">
               {p.columnsContent.map((group, i) => (
                 <div
                   key={group._key || i}
