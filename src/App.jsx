@@ -17,6 +17,15 @@ export default function App() {
     fetchPortfolios().then(setPortfolios)
   }, [])
 
+  useEffect(() => {
+    const setVh = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight}px`)
+    }
+    setVh()
+    window.addEventListener('resize', setVh)
+    return () => window.removeEventListener('resize', setVh)
+  }, [])
+
   const [uiState, setUiState] = useState({
     activeCol: 1,
     isZoomed: false,
@@ -32,7 +41,7 @@ export default function App() {
   const actionsRef = useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledRef)
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-black touch-none select-none custom-font">
+    <div className="w-full overflow-hidden bg-black touch-none select-none custom-font" style={{ height: 'var(--vh, 100vh)' }}>
       <style>{`
         @import url("https://use.typekit.net/mqn5led.css");
         .custom-font { font-family: "new-spirit-condensed", serif; font-weight: 300; font-style: normal; }

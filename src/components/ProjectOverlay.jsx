@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { PortableText } from '@portabletext/react'
 import ContentOverlay from './ContentOverlay'
 
@@ -44,6 +44,17 @@ export default function ProjectOverlay({ open, project, onClose }) {
   if (project) cachedProject.current = project
   const p = cachedProject.current
 
+  const [slideIndex, setSlideIndex] = useState(0)
+  const slideRefs = useRef([])
+
+  // Reset slider when project changes
+  useEffect(() => { setSlideIndex(0) }, [p?.title])
+
+  const goToSlide = (i) => {
+    slideRefs.current[i]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
+    setSlideIndex(i)
+  }
+
   const vimeoId = getVimeoId(p?.videoUrl)
 
   return (
@@ -85,6 +96,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
                 {p.gallery.map((img, i) => (
                   <img
                     key={i}
+                    ref={el => { slideRefs.current[i] = el }}
                     src={img.url}
                     alt={img.alt || ''}
                     className="snap-start flex-none h-[60vh] object-cover"
@@ -92,6 +104,37 @@ export default function ProjectOverlay({ open, project, onClose }) {
                   />
                 ))}
               </div>
+              {p.gallery.length > 1 && (
+                <div className="flex items-center justify-between px-6 mt-5">
+                  <button
+                    onClick={() => goToSlide(Math.max(0, slideIndex - 1))}
+                    disabled={slideIndex === 0}
+                    className="text-white disabled:opacity-20 transition-opacity"
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <div className="flex gap-2">
+                    {p.gallery.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => goToSlide(i)}
+                        className={`w-2 h-2 rounded-full transition-all ${i === slideIndex ? 'bg-white scale-125' : 'bg-white/30'}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => goToSlide(Math.min(p.gallery.length - 1, slideIndex + 1))}
+                    disabled={slideIndex === p.gallery.length - 1}
+                    className="text-white disabled:opacity-20 transition-opacity"
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
