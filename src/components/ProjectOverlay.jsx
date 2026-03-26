@@ -24,7 +24,7 @@ const ptComponents = {
     h2: ({ children }) => <h2 className="text-4xl mt-10 mb-4">{children}</h2>,
     h3: ({ children }) => <h3 className="text-3xl mt-8 mb-3">{children}</h3>,
     h4: ({ children }) => <h4 className="text-2xl mt-6 mb-2">{children}</h4>,
-    normal: ({ children }) => <p className="text-xl leading-relaxed mb-4">{children}</p>,
+    normal: ({ children }) => <p className="text-2xl leading-relaxed mb-4">{children}</p>,
     blockquote: ({ children }) => (
       <blockquote className="border-l-2 border-white pl-6 my-6 text-2xl italic">{children}</blockquote>
     ),
