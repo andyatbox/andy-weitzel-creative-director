@@ -47,8 +47,16 @@ export default function ProjectOverlay({ open, project, onClose }) {
   const [slideIndex, setSlideIndex] = useState(0)
   const slideRefs = useRef([])
 
-  // Reset slider when project changes
-  useEffect(() => { setSlideIndex(0) }, [p?.title])
+  // Reset slider and scroll to first slide when project opens
+  useEffect(() => {
+    setSlideIndex(0)
+    if (open && p?.gallery?.length > 0) {
+      const t = setTimeout(() => {
+        slideRefs.current[0]?.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' })
+      }, 50)
+      return () => clearTimeout(t)
+    }
+  }, [open, p?.title])
 
   const goToSlide = (i) => {
     slideRefs.current[i]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
@@ -99,7 +107,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
                     ref={el => { slideRefs.current[i] = el }}
                     src={img.url}
                     alt={img.alt || ''}
-                    className="snap-center flex-none h-[60vh] object-cover"
+                    className="snap-center flex-none max-h-[60vh] w-auto"
                     style={{ maxWidth: '70vw' }}
                   />
                 ))}
