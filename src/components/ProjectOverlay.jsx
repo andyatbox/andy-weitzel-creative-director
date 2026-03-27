@@ -106,7 +106,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
               <div
                 ref={sliderRef}
                 className="flex overflow-x-auto snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', paddingInline: '10%' }}
               >
                 {p.gallery.map((img, i) => (
                   <div
