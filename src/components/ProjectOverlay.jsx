@@ -45,29 +45,13 @@ export default function ProjectOverlay({ open, project, onClose }) {
   const p = cachedProject.current
 
   const [slideIndex, setSlideIndex] = useState(0)
-  const slideRefs = useRef([])
-  const sliderRef = useRef(null)
 
-  // Reset slider to first slide when project opens
+  // Reset to first slide when project opens
   useEffect(() => {
     setSlideIndex(0)
-    if (open && sliderRef.current) {
-      const t = setTimeout(() => {
-        if (sliderRef.current) sliderRef.current.scrollLeft = 0
-      }, 50)
-      return () => clearTimeout(t)
-    }
   }, [open, p?.title])
 
-  const goToSlide = (i) => {
-    const slide = slideRefs.current[i]
-    const container = sliderRef.current
-    if (slide && container) {
-      const left = slide.offsetLeft - (container.clientWidth - slide.offsetWidth) / 2
-      container.scrollTo({ left, behavior: 'smooth' })
-    }
-    setSlideIndex(i)
-  }
+  const goToSlide = (i) => setSlideIndex(i)
 
   const vimeoId = getVimeoId(p?.videoUrl)
 
@@ -100,25 +84,25 @@ export default function ProjectOverlay({ open, project, onClose }) {
             </div>
           )}
 
-          {/* Gallery slider — full width */}
+          {/* Gallery slider — transform-based, active slide always centred */}
           {p.gallery?.length > 0 && (
             <div className="w-full mb-12">
-              <div
-                ref={sliderRef}
-                className="flex overflow-x-auto snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', paddingInline: '10%' }}
-              >
+              <div className="relative overflow-hidden h-[60vh]">
                 {p.gallery.map((img, i) => (
                   <div
                     key={i}
-                    ref={el => { slideRefs.current[i] = el }}
-                    className="snap-center flex-none w-full md:w-[80%] flex justify-center px-6"
+                    className="absolute inset-y-0 flex items-center justify-center px-4 transition-transform duration-500 ease-out"
+                    style={{
+                      width: '85%',
+                      left: '50%',
+                      transform: `translateX(calc(-50% + ${(i - slideIndex) * 90}%))`,
+                    }}
                   >
                     <img
                       src={img.url}
                       alt={img.alt || ''}
-                      className="max-h-[60vh] w-auto"
-                      style={{ maxWidth: '70vw' }}
+                      className="max-h-full w-auto"
+                      style={{ maxWidth: '100%' }}
                     />
                   </div>
                 ))}
