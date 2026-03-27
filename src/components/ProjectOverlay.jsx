@@ -60,8 +60,11 @@ export default function ProjectOverlay({ open, project, onClose }) {
   }, [open, p?.title])
 
   const goToSlide = (i) => {
-    if (sliderRef.current) {
-      sliderRef.current.scrollTo({ left: i * sliderRef.current.clientWidth, behavior: 'smooth' })
+    const slide = slideRefs.current[i]
+    const container = sliderRef.current
+    if (slide && container) {
+      const left = slide.offsetLeft - (container.clientWidth - slide.offsetWidth) / 2
+      container.scrollTo({ left, behavior: 'smooth' })
     }
     setSlideIndex(i)
   }
@@ -109,7 +112,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
                   <div
                     key={i}
                     ref={el => { slideRefs.current[i] = el }}
-                    className="snap-start flex-none w-full flex justify-center px-6"
+                    className="snap-center flex-none w-full md:w-[80%] flex justify-center px-6"
                   >
                     <img
                       src={img.url}
