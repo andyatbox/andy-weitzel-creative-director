@@ -88,11 +88,9 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         }
       }
 
-      const currentGy = Math.round(-state.targetY / state.cellH)
       const colRows = portfolios[colIndex].length
-      const bestGy = Math.round(currentGy / colRows) * colRows
       state.targetX = bestGx * state.cellW
-      state.targetY = -bestGy * state.cellH
+      state.targetY = Math.floor(colRows / 2) * state.cellH
     }
 
     actionsRef.current.zoomTo = (x, y, itemData) => {
