@@ -287,6 +287,12 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
           }
         }
 
+        // Start camera centred on the first item of the active column
+        const activeColRows = portfolios[state.currentActiveCol].length
+        const initialY = Math.floor(activeColRows / 2) * state.cellH
+        state.targetY = initialY
+        state.currentCamY = initialY
+
         setTimeout(() => setUiState(s => ({ ...s, loading: false })), 2000)
       }
     )
