@@ -45,6 +45,9 @@ export default function ProjectOverlay({ open, project, onClose }) {
   const p = cachedProject.current
 
   const [slideIndex, setSlideIndex] = useState(0)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const dragStartX = useRef(null)
 
   // Reset to first slide when project opens
   useEffect(() => {
@@ -52,6 +55,26 @@ export default function ProjectOverlay({ open, project, onClose }) {
   }, [open, p?.title])
 
   const goToSlide = (i) => setSlideIndex(i)
+
+  const handlePointerDown = (e) => {
+    dragStartX.current = e.clientX
+    setDragging(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handlePointerMove = (e) => {
+    if (!dragging) return
+    setDragOffset(e.clientX - dragStartX.current)
+  }
+
+  const handlePointerUp = (e) => {
+    if (!dragging) return
+    setDragging(false)
+    setDragOffset(0)
+    const dx = e.clientX - dragStartX.current
+    if (dx < -50) goToSlide(Math.min(p.gallery.length - 1, slideIndex + 1))
+    else if (dx > 50) goToSlide(Math.max(0, slideIndex - 1))
+  }
 
   const vimeoId = getVimeoId(p?.videoUrl)
 
@@ -87,15 +110,21 @@ export default function ProjectOverlay({ open, project, onClose }) {
           {/* Gallery slider — transform-based, active slide always centred */}
           {p.gallery?.length > 0 && (
             <div className="w-full mb-12">
-              <div className="relative overflow-hidden h-[60vh]">
+              <div
+                className="relative overflow-hidden h-[60vh] touch-none"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+              >
                 {p.gallery.map((img, i) => (
                   <div
                     key={i}
-                    className="absolute inset-y-0 flex items-center justify-center px-4 transition-transform duration-500 ease-out"
+                    className={`absolute inset-y-0 flex items-center justify-center px-6 ${dragging ? '' : 'transition-transform duration-500 ease-out'}`}
                     style={{
                       width: '85%',
                       left: '50%',
-                      transform: `translateX(calc(-50% + ${(i - slideIndex) * 90}%))`,
+                      transform: `translateX(calc(-50% + ${(i - slideIndex) * 90}% + ${dragOffset}px))`,
                     }}
                   >
                     <img
