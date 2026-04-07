@@ -124,7 +124,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
                     style={{
                       width: '85%',
                       left: '50%',
-                      transform: `translateX(calc(-50% + ${(i - slideIndex) * 90}% + ${dragOffset}px))`,
+                      transform: `translateX(calc(-50% + ${(i - slideIndex) * 100}% + ${dragOffset}px))`,
                     }}
                   >
                     <img
