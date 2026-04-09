@@ -44,7 +44,7 @@ export default function App() {
     <div className="w-full overflow-hidden bg-black touch-none select-none custom-font" style={{ height: 'var(--vh, 100vh)' }}>
       <style>{`
         @import url("https://use.typekit.net/mqn5led.css");
-        .custom-font { font-family: "new-spirit-condensed", serif; font-weight: 300; font-style: normal; }
+        .custom-font { font-family: "new-spirit-condensed", serif; font-weight: 300; font-style: normal; font-feature-settings: "ss01" 1; -webkit-font-feature-settings: "ss01" 1; }
         .blur-bg { background-color: rgba(255,255,255,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
       `}</style>
 
