@@ -4,6 +4,11 @@ import ContentOverlay from './ContentOverlay'
 
 const getVimeoId = (url) => url?.match(/(?:vimeo\.com\/)(\d+)/)?.[1]
 
+const CATEGORY_LABELS = {
+  'branding-print': 'Branding & Print',
+  'immersive-ux': 'Interactive Experiences',
+}
+
 const ptComponents = {
   types: {
     image: ({ value }) => value.src ? (
@@ -90,6 +95,9 @@ export default function ProjectOverlay({ open, project, onClose }) {
 
           {/* Title */}
           <div className="max-w-7xl mx-auto px-6 mb-12">
+            {p.category && (
+              <p className="text-sm uppercase tracking-widest mb-4 opacity-60">{CATEGORY_LABELS[p.category] ?? p.category}</p>
+            )}
             <h1 className="text-6xl md:text-8xl leading-none">{p.title}</h1>
           </div>
 

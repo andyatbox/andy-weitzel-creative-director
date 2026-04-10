@@ -44,6 +44,7 @@ const QUERY = `*[_type == "project" && defined(thumbnail)] | order(orderRank) {
 
 const toItem = (p) => ({
   title:          p.title,
+  category:       p.category,
   image:          p.image,
   videoUrl:       p.videoUrl   || null,
   gallery:        p.gallery    || [],
