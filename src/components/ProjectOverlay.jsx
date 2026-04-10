@@ -2,7 +2,18 @@ import { useRef, useState, useEffect } from 'react'
 import { PortableText } from '@portabletext/react'
 import ContentOverlay from './ContentOverlay'
 
-const getVimeoId = (url) => url?.match(/(?:vimeo\.com\/)(\d+)/)?.[1]
+// Accepts either a plain Vimeo URL or the full embed code Vimeo provides.
+// Returns sanitised embed HTML ready for dangerouslySetInnerHTML.
+const getVimeoHtml = (videoUrl) => {
+  if (!videoUrl) return null
+  if (videoUrl.includes('<iframe')) {
+    // Strip the <script> tag — the iframe alone handles playback
+    return videoUrl.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').trim()
+  }
+  const id = videoUrl.match(/(?:vimeo\.com\/(?:video\/)?)(\d+)/)?.[1]
+  if (!id) return null
+  return `<div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/${id}?color=ffffff&title=0&byline=0&portrait=0" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`
+}
 
 const CATEGORY_LABELS = {
   'branding-print': 'Branding & Print',
@@ -81,7 +92,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
     else if (dx > 50) goToSlide(Math.max(0, slideIndex - 1))
   }
 
-  const vimeoId = getVimeoId(p?.videoUrl)
+  const vimeoHtml = getVimeoHtml(p?.videoUrl)
 
   return (
     <ContentOverlay open={open} onClose={onClose}>
@@ -102,16 +113,9 @@ export default function ProjectOverlay({ open, project, onClose }) {
           </div>
 
           {/* Vimeo embed */}
-          {vimeoId && (
+          {vimeoHtml && (
             <div className="max-w-7xl mx-auto px-6 mb-12">
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  src={`https://player.vimeo.com/video/${vimeoId}?color=ffffff&title=0&byline=0&portrait=0`}
-                  className="absolute inset-0 w-full h-full"
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+              <div dangerouslySetInnerHTML={{ __html: vimeoHtml }} />
             </div>
           )}
 
