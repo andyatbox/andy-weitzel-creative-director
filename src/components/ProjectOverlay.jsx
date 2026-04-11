@@ -61,35 +61,56 @@ export default function ProjectOverlay({ open, project, onClose }) {
   const p = cachedProject.current
 
   const [slideIndex, setSlideIndex] = useState(0)
-  const [dragOffset, setDragOffset] = useState(0)
-  const [dragging, setDragging] = useState(false)
+  const trackRef = useRef(null)
+  const isDragging = useRef(false)
   const dragStartX = useRef(null)
+  const slideIndexRef = useRef(0)
+  slideIndexRef.current = slideIndex
 
-  // Reset to first slide when project opens
+  // Reset to first slide when project opens — no transition
   useEffect(() => {
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'none'
+      trackRef.current.style.transform = 'translateX(0)'
+    }
     setSlideIndex(0)
   }, [open, p?.title])
 
-  const goToSlide = (i) => setSlideIndex(i)
+  const goToSlide = (i) => {
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'transform 500ms ease-out'
+      trackRef.current.style.transform = `translateX(-${i * 100}%)`
+    }
+    setSlideIndex(i)
+  }
 
   const handlePointerDown = (e) => {
     dragStartX.current = e.clientX
-    setDragging(true)
+    isDragging.current = true
     e.currentTarget.setPointerCapture(e.pointerId)
+    if (trackRef.current) trackRef.current.style.transition = 'none'
   }
 
   const handlePointerMove = (e) => {
-    if (!dragging) return
-    setDragOffset(e.clientX - dragStartX.current)
+    if (!isDragging.current) return
+    const dx = e.clientX - dragStartX.current
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translateX(calc(-${slideIndexRef.current * 100}% + ${dx}px))`
+    }
   }
 
   const handlePointerUp = (e) => {
-    if (!dragging) return
-    setDragging(false)
-    setDragOffset(0)
+    if (!isDragging.current) return
+    isDragging.current = false
     const dx = e.clientX - dragStartX.current
-    if (dx < -50) goToSlide(Math.min(p.gallery.length - 1, slideIndex + 1))
-    else if (dx > 50) goToSlide(Math.max(0, slideIndex - 1))
+    const cur = slideIndexRef.current
+    const total = p?.gallery?.length ?? 0
+    const next = dx < -50 ? Math.min(total - 1, cur + 1) : dx > 50 ? Math.max(0, cur - 1) : cur
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'transform 500ms ease-out'
+      trackRef.current.style.transform = `translateX(-${next * 100}%)`
+    }
+    if (next !== cur) setSlideIndex(next)
   }
 
   const vimeoHtml = getVimeoHtml(p?.videoUrl)
@@ -119,34 +140,27 @@ export default function ProjectOverlay({ open, project, onClose }) {
             </div>
           )}
 
-          {/* Gallery slider — transform-based, active slide always centred */}
+          {/* Gallery slider — flex track, height driven by image content */}
           {p.gallery?.length > 0 && (
             <div className="w-full mb-12">
               <div
-                className="relative overflow-hidden h-[60vh] touch-none"
+                className="overflow-hidden touch-none"
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
               >
-                {p.gallery.map((img, i) => (
-                  <div
-                    key={i}
-                    className={`absolute inset-y-0 flex items-center justify-center px-6 ${dragging ? '' : 'transition-transform duration-500 ease-out'}`}
-                    style={{
-                      width: '85%',
-                      left: '50%',
-                      transform: `translateX(calc(-50% + ${(i - slideIndex) * 100}% + ${dragOffset}px))`,
-                    }}
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.alt || ''}
-                      className="max-h-full w-auto"
-                      style={{ maxWidth: '100%' }}
-                    />
-                  </div>
-                ))}
+                <div ref={trackRef} className="flex" style={{ transform: 'translateX(0)' }}>
+                  {p.gallery.map((img, i) => (
+                    <div key={i} className="flex-none w-full px-6">
+                      <img
+                        src={img.url}
+                        alt={img.alt || ''}
+                        className="w-full h-auto block"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
               {p.gallery.length > 1 && (
                 <div className="flex items-center justify-between px-6 mt-5">
