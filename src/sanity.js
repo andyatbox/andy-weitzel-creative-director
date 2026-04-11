@@ -32,6 +32,7 @@ const QUERY = `*[_type == "project" && defined(thumbnail)] | order(orderRank) {
   "image": thumbnail.asset->url + "?w=1200&auto=format&fit=crop",
   videoUrl,
   "gallery": gallery[]{ "url": asset->url + "?w=1600&auto=format", alt },
+  "previewGallery": gallery[]{ "url": asset->url + "?w=800&auto=format" },
   "body": body[]{ ${ptImageFields} },
   "columnsContent": columnsContent[]{
     _key,
@@ -48,6 +49,7 @@ const toItem = (p) => ({
   image:          p.image,
   videoUrl:       p.videoUrl   || null,
   gallery:        p.gallery    || [],
+  previewGallery: p.previewGallery || [],
   body:           p.body       || [],
   columnsContent: p.columnsContent || [],
 })

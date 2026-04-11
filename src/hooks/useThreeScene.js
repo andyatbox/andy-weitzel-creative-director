@@ -122,7 +122,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       setUiState(s => ({ ...s, isZoomed: false, activeProject: null }))
     }
 
-    // --- Texture loader ---
+    // --- Texture loaders ---
     const loadTexture = (itemData) => {
       return new Promise(resolve => {
         new THREE.TextureLoader().load(itemData.image, (t) => {
@@ -131,6 +131,13 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         })
       })
     }
+
+    const loadUrlTexture = (url) => new Promise(resolve => {
+      new THREE.TextureLoader().load(url, (t) => {
+        t.colorSpace = THREE.SRGBColorSpace
+        resolve({ tex: t, imgW: t.image.width, imgH: t.image.height })
+      }, undefined, () => resolve(null))
+    })
 
     // --- Build scene grid ---
     // PHYS_COLS is always ≥ 3 so there are always items left + center + right on screen.
@@ -217,6 +224,15 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               group.add(planes.B)
 
               itemObj.texData = texData
+
+              // Load gallery preview textures for cycling animation
+              if (itemData.previewGallery?.length > 0) {
+                Promise.all(itemData.previewGallery.map(g => loadUrlTexture(g.url))).then(textures => {
+                  itemObj.galleryTextures = textures.filter(Boolean)
+                  // Randomise start offset so items don't all flip at the same moment
+                  itemObj.galleryLastSwap = Date.now() - Math.floor(Math.random() * 3000)
+                })
+              }
             })
 
             // 3D extruded text
@@ -280,6 +296,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               gx, gy, colIndex: col, data: itemData, texData: null,
               hoverScale: 1.0, isHovered: false,
               colRows,
+              galleryTextures: [], galleryIdx: 0, galleryLastSwap: 0,
             }
             items.push(itemObj)
           }
@@ -507,6 +524,23 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
             const splitAmount = state.velY * 1.5
             item.planes.R.position.y = splitAmount
             item.planes.B.position.y = -splitAmount
+
+            // Cycle through gallery images every 3 seconds
+            if (item.galleryTextures.length > 0) {
+              const now = Date.now()
+              if (now - item.galleryLastSwap > 3000) {
+                item.galleryIdx = (item.galleryIdx + 1) % item.galleryTextures.length
+                item.galleryLastSwap = now
+                const gTex = item.galleryTextures[item.galleryIdx]
+                item.texData = gTex
+                item.planes.R.material.map = gTex.tex
+                item.planes.G.material.map = gTex.tex
+                item.planes.B.material.map = gTex.tex
+                item.planes.R.material.needsUpdate = true
+                item.planes.G.material.needsUpdate = true
+                item.planes.B.material.needsUpdate = true
+              }
+            }
           } else {
             item.planes.R.position.y += (0 - item.planes.R.position.y) * 0.1
             item.planes.B.position.y += (0 - item.planes.B.position.y) * 0.1
