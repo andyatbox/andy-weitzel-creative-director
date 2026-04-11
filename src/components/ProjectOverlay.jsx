@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { PortableText } from '@portabletext/react'
 import ContentOverlay from './ContentOverlay'
 
@@ -113,7 +113,11 @@ export default function ProjectOverlay({ open, project, onClose }) {
     if (next !== cur) setSlideIndex(next)
   }
 
-  const vimeoHtml = getVimeoHtml(p?.videoUrl)
+  const vimeoHtml = useMemo(() => getVimeoHtml(p?.videoUrl), [p?.videoUrl])
+  const vimeoRef = useRef(null)
+  useEffect(() => {
+    if (vimeoRef.current) vimeoRef.current.innerHTML = vimeoHtml ?? ''
+  }, [vimeoHtml])
 
   return (
     <ContentOverlay open={open} onClose={onClose}>
@@ -133,10 +137,10 @@ export default function ProjectOverlay({ open, project, onClose }) {
             <h1 className="text-6xl md:text-8xl leading-none">{p.title}</h1>
           </div>
 
-          {/* Vimeo embed */}
+          {/* Vimeo embed — mounted once via ref to prevent iframe reload on re-renders */}
           {vimeoHtml && (
             <div className="max-w-7xl mx-auto px-6 mb-12">
-              <div dangerouslySetInnerHTML={{ __html: vimeoHtml }} />
+              <div ref={vimeoRef} />
             </div>
           )}
 
