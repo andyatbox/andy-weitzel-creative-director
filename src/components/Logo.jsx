@@ -8,7 +8,7 @@ export default function Logo({ loading }) {
         transform: loading ? 'translate(-50%, -50%) scale(1.5)' : 'translate(0, 0) scale(1)',
         width: '15vw',
         minWidth: '120px',
-        maxWidth: '220px',
+        maxWidth: '190px',
         opacity: 1,
       }}
     >

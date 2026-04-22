@@ -86,8 +86,8 @@ export default function Navigation({ activeCol, isZoomed, loading, menuOpen, onN
           <button
             key={item.label}
             onClick={() => onNavClick(item.col)}
-            className={`ui-element flex-1 max-w-xs px-6 py-3 rounded-full text-white text-xl transition-all backdrop-blur-md ${
-              activeCol === item.col ? 'bg-black/60' : 'bg-black/30'
+            className={`ui-element flex-1 max-w-xs px-6 py-3 rounded-full text-xl transition-all backdrop-blur-md ${
+              activeCol === item.col ? 'bg-white/80 text-black' : 'bg-black/30 text-white'
             }`}
           >
             {item.label}

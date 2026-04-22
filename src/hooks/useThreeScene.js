@@ -260,7 +260,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
                 const charWidth = bBox.max.x - bBox.min.x
                 textGeo.translate(
                   -0.5 * (bBox.max.x + bBox.min.x),
-                  -0.5 * (bBox.max.y + bBox.min.y),
+                  0,
                   -0.5 * (bBox.max.z + bBox.min.z)
                 )
 
@@ -268,7 +268,8 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
                 if (j < line.length - 1) {
                   const nextChar = line[j + 1]
                   if ((char === 'T' && nextChar === 'A') || (char === 'A' && nextChar === 'T') ||
-                      (char === 'O' && nextChar === 'X') || (char === 'Y' && nextChar === 'O')) customKerning = -0.16
+                      (char === 'O' && nextChar === 'X') || (char === 'Y' && nextChar === 'O') ||
+                      (char === 'A' && nextChar === 'Y') || (char === 'Y' && nextChar === 'A')) customKerning = -0.16
                   if (char === 'C' && nextChar === 'A') customKerning = -0.13
                   if (char === 'B' && nextChar === 'O') customKerning = -0.09
                 }
@@ -287,12 +288,34 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               lineItems.forEach(li => li.mesh.position.x -= currentX / 2)
             })
 
+            // Anchor last line's baseline at y=0 (prior lines stack upward)
             textGroup.children.forEach(mesh => {
-              mesh.position.y += (lines.length - 1) * lineHeight / 2
+              mesh.position.y += (lines.length - 1) * lineHeight
             })
 
+            // Background plane sized to the text block + padding, sits behind the glyphs
+            const textBox = new THREE.Box3()
+            textMeshes.forEach(mesh => {
+              mesh.geometry.computeBoundingBox()
+              const meshBox = mesh.geometry.boundingBox.clone()
+              meshBox.translate(mesh.position)
+              textBox.union(meshBox)
+            })
+            const padX = 0.4
+            const padY = 0.25
+            const bgW = (textBox.max.x - textBox.min.x) + padX * 2
+            const bgH = (textBox.max.y - textBox.min.y) + padY * 2
+            const bgCX = (textBox.max.x + textBox.min.x) / 2
+            const bgCY = (textBox.max.y + textBox.min.y) / 2
+            const textBgPlane = new THREE.Mesh(
+              new THREE.PlaneGeometry(bgW, bgH),
+              new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.65, depthWrite: false })
+            )
+            textBgPlane.position.set(bgCX, bgCY, -0.1)
+            textGroup.add(textBgPlane)
+
             const itemObj = {
-              group, baseMesh, planes, textGroup, textMeshes,
+              group, baseMesh, planes, textGroup, textMeshes, textBgPlane,
               gx, gy, colIndex: col, data: itemData, texData: null,
               hoverScale: 1.0, isHovered: false,
               colRows,
@@ -551,7 +574,9 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
           const fontSize = Math.min(state.W, state.H) * 0.08
           item.textGroup.scale.set(fontSize, fontSize, 1)
           item.textGroup.position.x = dx * 0.12 - state.mouseX * state.W * 0.07
-          item.textGroup.position.y = dy * 0.12 - state.mouseY * state.H * 0.07
+          item.textGroup.position.y = -state.H * 0.4 + dy * 0.12 - state.mouseY * state.H * 0.07
+
+          if (item.textBgPlane) item.textBgPlane.visible = !state.isZoomed
 
           item.textMeshes.forEach(mesh => {
             mesh.rotation.x += (state.targetLetterRotation - mesh.rotation.x) * 0.08
