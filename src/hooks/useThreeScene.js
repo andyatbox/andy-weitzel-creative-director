@@ -269,7 +269,8 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
                   const nextChar = line[j + 1]
                   if ((char === 'T' && nextChar === 'A') || (char === 'A' && nextChar === 'T') ||
                       (char === 'O' && nextChar === 'X') || (char === 'Y' && nextChar === 'O') ||
-                      (char === 'A' && nextChar === 'Y') || (char === 'Y' && nextChar === 'A')) customKerning = -0.16
+                      (char === 'A' && nextChar === 'Y') || (char === 'Y' && nextChar === 'A') ||
+                      (char === 'A' && nextChar === 'W') || (char === 'W' && nextChar === 'A')) customKerning = -0.16
                   if (char === 'C' && nextChar === 'A') customKerning = -0.13
                   if (char === 'B' && nextChar === 'O') customKerning = -0.09
                 }
