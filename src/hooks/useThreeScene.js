@@ -24,11 +24,11 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
     state.W = window.innerWidth
     state.H = window.innerHeight
     const isMobile = state.W < 768
-    const GAP = isMobile ? 20 : 80
+    const GAP = isMobile ? 40 : 160
     state.cellW = state.W + GAP
     state.cellH = state.H + GAP
 
-    state.targetZoomVal = state.W > state.H ? 1.5 : 1.6
+    state.targetZoomVal = state.W > state.H ? 1.7 : 1.8
     state.animatedZoom = state.targetZoomVal
 
     const renderer = new THREE.WebGLRenderer({
@@ -115,7 +115,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       state.isZoomed = false
       state.targetX = state.preZoomTargetX
       state.targetY = state.preZoomTargetY
-      state.targetZoomVal = state.W > state.H ? 1.5 : 1.6
+      state.targetZoomVal = state.W > state.H ? 1.7 : 1.8
       state.targetEffectIntensity = 1.0
       state.targetLetterRotation = 0
 
@@ -131,13 +131,6 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         })
       })
     }
-
-    const loadUrlTexture = (url) => new Promise(resolve => {
-      new THREE.TextureLoader().load(url, (t) => {
-        t.colorSpace = THREE.SRGBColorSpace
-        resolve({ tex: t, imgW: t.image.width, imgH: t.image.height })
-      }, undefined, () => resolve(null))
-    })
 
     // --- Build scene grid ---
     // PHYS_COLS is always ≥ 3 so there are always items left + center + right on screen.
@@ -224,15 +217,6 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               group.add(planes.B)
 
               itemObj.texData = texData
-
-              // Load gallery preview textures for cycling animation
-              if (itemData.previewGallery?.length > 0) {
-                Promise.all(itemData.previewGallery.map(g => loadUrlTexture(g.url))).then(textures => {
-                  itemObj.galleryTextures = textures.filter(Boolean)
-                  // Randomise start offset so items don't all flip at the same moment
-                  itemObj.galleryLastSwap = Date.now() - Math.floor(Math.random() * 3000)
-                })
-              }
             })
 
             // 3D extruded text
@@ -286,10 +270,9 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
                 currentX += charWidth + letterSpacing + customKerning
               }
 
-              lineItems.forEach(li => li.mesh.position.x -= currentX / 2)
             })
 
-            // Anchor last line's baseline at y=0 (prior lines stack upward)
+            // Anchor last line's baseline at y=0 so text grows upward from the bottom
             textGroup.children.forEach(mesh => {
               mesh.position.y += (lines.length - 1) * lineHeight
             })
@@ -302,8 +285,8 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               meshBox.translate(mesh.position)
               textBox.union(meshBox)
             })
-            const padX = 0.4
-            const padY = 0.25
+            const padX = 0.8
+            const padY = 0.5
             const bgW = (textBox.max.x - textBox.min.x) + padX * 2
             const bgH = (textBox.max.y - textBox.min.y) + padY * 2
             const bgCX = (textBox.max.x + textBox.min.x) / 2
@@ -320,7 +303,6 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               gx, gy, colIndex: col, data: itemData, texData: null,
               hoverScale: 1.0, isHovered: false,
               colRows,
-              galleryTextures: [], galleryIdx: 0, galleryLastSwap: 0,
             }
             items.push(itemObj)
           }
@@ -548,23 +530,6 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
             const splitAmount = state.velY * 1.5
             item.planes.R.position.y = splitAmount
             item.planes.B.position.y = -splitAmount
-
-            // Cycle through gallery images every 3 seconds
-            if (item.galleryTextures.length > 0) {
-              const now = Date.now()
-              if (now - item.galleryLastSwap > 3000) {
-                item.galleryIdx = (item.galleryIdx + 1) % item.galleryTextures.length
-                item.galleryLastSwap = now
-                const gTex = item.galleryTextures[item.galleryIdx]
-                item.texData = gTex
-                item.planes.R.material.map = gTex.tex
-                item.planes.G.material.map = gTex.tex
-                item.planes.B.material.map = gTex.tex
-                item.planes.R.material.needsUpdate = true
-                item.planes.G.material.needsUpdate = true
-                item.planes.B.material.needsUpdate = true
-              }
-            }
           } else {
             item.planes.R.position.y += (0 - item.planes.R.position.y) * 0.1
             item.planes.B.position.y += (0 - item.planes.B.position.y) * 0.1
@@ -572,10 +537,10 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         }
 
         if (item.textGroup) {
-          const fontSize = Math.min(state.W, state.H) * 0.08
+          const fontSize = Math.min(state.W, state.H) * 0.04
           item.textGroup.scale.set(fontSize, fontSize, 1)
-          item.textGroup.position.x = dx * 0.12 - state.mouseX * state.W * 0.07
-          item.textGroup.position.y = -state.H * 0.4 + dy * 0.12 - state.mouseY * state.H * 0.07
+          item.textGroup.position.x = -state.W * 0.5 + fontSize * 1.4 + dx * 0.12 - state.mouseX * state.W * 0.07
+          item.textGroup.position.y = -state.H * 0.5 + fontSize * 1.4 + dy * 0.12 - state.mouseY * state.H * 0.07
 
           if (item.textBgPlane) item.textBgPlane.visible = !state.isZoomed
 

@@ -15,11 +15,19 @@ export default function ContentOverlay({ open, onClose, children }) {
         open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}
     >
-      {/* Animated backdrop */}
+      {/* Backdrop tint — delayed until after content fade-in completes */}
       <div
-        className={`absolute inset-0 transition-all duration-700 ${
-          open ? 'backdrop-blur-md bg-black/55' : 'backdrop-blur-none bg-black/0'
+        className={`absolute inset-0 transition-all duration-500 ${
+          open ? 'bg-black/55' : 'bg-black/0'
         }`}
+        style={{ transitionDelay: open ? '850ms' : '0ms' }}
+      />
+      {/* Backdrop blur — delayed until after content fade-in completes */}
+      <div
+        className={`absolute inset-0 transition-all duration-500 ${
+          open ? 'backdrop-blur-md' : 'backdrop-blur-none'
+        }`}
+        style={{ transitionDelay: open ? '850ms' : '0ms' }}
       />
 
       {/* Close button — absolute within fixed parent, above scrollable content */}
@@ -32,12 +40,10 @@ export default function ContentOverlay({ open, onClose, children }) {
         </svg>
       </button>
 
-      {/* Scrollable content — slides up on open */}
+      {/* Scrollable content */}
       <div
         ref={scrollRef}
-        className={`relative z-10 h-full overflow-y-auto transition-all duration-500 ${
-          open ? 'translate-y-0' : 'translate-y-6'
-        }`}
+        className="relative z-10 h-full overflow-y-auto"
       >
         {children}
       </div>

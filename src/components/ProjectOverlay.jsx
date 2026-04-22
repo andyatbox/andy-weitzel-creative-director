@@ -123,18 +123,42 @@ export default function ProjectOverlay({ open, project, onClose }) {
     <ContentOverlay open={open} onClose={onClose}>
       {p && (
         <div
-          className={`text-white py-20 transition-all duration-700 ${
-            open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          className={`relative transition-opacity duration-700 ${
+            open ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ transitionDelay: open ? '150ms' : '0ms' }}
         >
 
+          {/* Hero — thumbnail, full viewport height, scrolls away with content */}
+          {p.image && (
+            <div
+              className="absolute top-0 left-0 w-full z-0"
+              style={{ height: 'var(--vh, 100vh)' }}
+            >
+              <img
+                src={p.image}
+                alt={p.title}
+                className="w-full h-full object-cover"
+              />
+              {/* Scroll-down indicator */}
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none">
+                <div className="w-[50px] h-[50px] rounded-full blur-bg shadow-sm text-black flex items-center justify-center animate-bounce">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="relative z-10 text-white py-20 [&>*:nth-child(2)]:mt-[100vh]">
+
           {/* Title */}
           <div className="max-w-7xl mx-auto px-6 mb-12">
             {p.category && (
-              <p className="text-sm uppercase tracking-widest mb-4 opacity-60">{CATEGORY_LABELS[p.category] ?? p.category}</p>
+              <p className="text-2xl mb-4 [text-shadow:0_1px_4px_rgba(0,0,0,0.4)]">{CATEGORY_LABELS[p.category] ?? p.category}</p>
             )}
-            <h1 className="text-6xl md:text-8xl leading-none">{p.title}</h1>
+            <h1 className="text-6xl md:text-8xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,0.4)]">{p.title}</h1>
           </div>
 
           {/* Vimeo embed — mounted once via ref to prevent iframe reload on re-renders */}
@@ -227,6 +251,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
             </div>
           )}
 
+          </div>
         </div>
       )}
     </ContentOverlay>

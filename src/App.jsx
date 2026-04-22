@@ -12,6 +12,19 @@ export default function App() {
   const [portfolios, setPortfolios] = useState(null)
   const [cvOpen, setCvOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+  const [formStatus, setFormStatus] = useState('idle') // idle | submitting | success | error
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault()
+    setFormStatus('submitting')
+    try {
+      const data = new FormData(e.target)
+      await fetch('https://submit.jotform.com/submit/261115069818055', { method: 'POST', body: data, mode: 'no-cors' })
+      setFormStatus('success')
+    } catch {
+      setFormStatus('error')
+    }
+  }
 
   useEffect(() => {
     fetchPortfolios().then(setPortfolios)
@@ -130,22 +143,76 @@ export default function App() {
       <ContentOverlay open={contactOpen} onClose={() => setContactOpen(false)}>
         <div className="max-w-2xl mx-auto px-6 py-20 text-white">
           <h1 className="text-6xl md:text-8xl mb-12">Contact</h1>
+
+          {/* Jotform */}
+          {formStatus === 'success' ? (
+            <div className="mb-12 border border-white/20 p-8 text-xl">
+              Message sent — thank you.
+            </div>
+          ) : (
+            <form onSubmit={handleContactSubmit} className="mb-12">
+              <input type="hidden" name="formID" value="261115069818055" />
+              <input type="hidden" name="apiKey" value="e031c082b71313437e17715928524edd" />
+              <div className="mb-6">
+                <label htmlFor="input_4" className="block text-xl mb-3">
+                  Email <span className="text-white/60">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="input_4"
+                  name="q4_email"
+                  required
+                  placeholder="example@example.com"
+                  autoComplete="email"
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 p-4 text-xl focus:outline-none focus:border-white/60 transition-colors"
+                />
+              </div>
+              <div className="mb-6">
+                <label htmlFor="input_2" className="block text-xl mb-3">
+                  Message <span className="text-white/60">*</span>
+                </label>
+                <textarea
+                  id="input_2"
+                  name="q2_q2_textarea0"
+                  required
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 p-4 text-xl resize-none focus:outline-none focus:border-white/60 transition-colors"
+                  rows={6}
+                />
+              </div>
+              {formStatus === 'error' && (
+                <p className="text-white/60 mb-4">Something went wrong — please try again.</p>
+              )}
+              <button
+                type="submit"
+                disabled={formStatus === 'submitting'}
+                className="border border-white/40 px-8 py-3 text-xl hover:bg-white hover:text-black transition-all disabled:opacity-40"
+              >
+                {formStatus === 'submitting' ? 'Sending…' : 'Send Message'}
+              </button>
+              <input type="hidden" name="website" value="" />
+            </form>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border-t border-white/20 pt-4">
-              <p className="text-sm uppercase tracking-widest mb-1">Email</p>
-              <p className="text-xl">hello@andyweitzel.com</p>
-            </div>
-            <div className="border-t border-white/20 pt-4">
-              <p className="text-sm uppercase tracking-widest mb-1">Location</p>
-              <p className="text-xl">New York, NY</p>
-            </div>
-            <div className="border-t border-white/20 pt-4">
               <p className="text-sm uppercase tracking-widest mb-1">Instagram</p>
-              <p className="text-xl">@andyweitzel</p>
+              <a href="https://www.instagram.com/andynewyork" target="_blank" rel="noopener noreferrer" className="text-xl hover:underline">@andynewyork</a>
             </div>
             <div className="border-t border-white/20 pt-4">
               <p className="text-sm uppercase tracking-widest mb-1">LinkedIn</p>
-              <p className="text-xl">linkedin.com/in/andyweitzel</p>
+              <a href="https://linkedin.com/in/andyweitzel" target="_blank" rel="noopener noreferrer" className="text-xl hover:underline">linkedin.com/in/andyweitzel</a>
+            </div>
+            <div className="border-t border-white/20 pt-4">
+              <p className="text-sm uppercase tracking-widest mb-1">Resides</p>
+              <p className="text-xl">Ridgewood, Queens</p>
+            </div>
+            <div className="border-t border-white/20 pt-4">
+              <p className="text-sm uppercase tracking-widest mb-1">Businesses</p>
+              <div className="flex flex-col gap-1 text-xl">
+                <a href="https://box.biz" target="_blank" rel="noopener noreferrer" className="hover:underline">Box Creative</a>
+                <a href="https://dayworker.co" target="_blank" rel="noopener noreferrer" className="hover:underline">Dayworker</a>
+                <a href="https://guru.guide" target="_blank" rel="noopener noreferrer" className="hover:underline">Guru</a>
+              </div>
             </div>
           </div>
         </div>
