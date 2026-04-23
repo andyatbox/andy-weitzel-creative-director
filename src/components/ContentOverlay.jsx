@@ -1,9 +1,9 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useLayoutEffect } from 'react'
 
 export default function ContentOverlay({ open, onClose, children }) {
   const scrollRef = useRef(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open && scrollRef.current) {
       scrollRef.current.scrollTop = 0
     }

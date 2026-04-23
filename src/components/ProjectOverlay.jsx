@@ -123,6 +123,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
     <ContentOverlay open={open} onClose={onClose}>
       {p && (
         <div
+          key={p.title}
           className={`relative transition-opacity duration-700 ${
             open ? 'opacity-100' : 'opacity-0'
           }`}
