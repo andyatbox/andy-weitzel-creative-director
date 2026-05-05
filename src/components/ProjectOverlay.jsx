@@ -54,6 +54,16 @@ const ptComponents = {
   },
 }
 
+const colPtComponents = {
+  ...ptComponents,
+  block: {
+    ...ptComponents.block,
+    h2: ({ children }) => <h2 className="text-2xl mt-6 mb-3">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-2xl mt-4 mb-2">{children}</h3>,
+    h4: ({ children }) => <h4 className="text-2xl mt-3 mb-1">{children}</h4>,
+  },
+}
+
 export default function ProjectOverlay({ open, project, onClose }) {
   // Cache last non-null project so content stays visible during close animation
   const cachedProject = useRef(null)
@@ -242,10 +252,10 @@ export default function ProjectOverlay({ open, project, onClose }) {
                     group.columns === '3' ? 'md:grid-cols-3' : 'md:grid-cols-2'
                   }`}
                 >
-                  <div><PortableText value={group.column1 || []} components={ptComponents} /></div>
-                  <div><PortableText value={group.column2 || []} components={ptComponents} /></div>
+                  <div><PortableText value={group.column1 || []} components={colPtComponents} /></div>
+                  <div><PortableText value={group.column2 || []} components={colPtComponents} /></div>
                   {group.columns === '3' && (
-                    <div><PortableText value={group.column3 || []} components={ptComponents} /></div>
+                    <div><PortableText value={group.column3 || []} components={colPtComponents} /></div>
                   )}
                 </div>
               ))}
