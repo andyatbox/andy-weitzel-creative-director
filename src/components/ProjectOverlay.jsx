@@ -26,7 +26,7 @@ const ptComponents = {
       <figure className="my-8">
         <img src={value.src} alt={value.altText || ''} className="w-full" />
         {value.captionText && (
-          <figcaption className="text-sm mt-2 text-white">{value.captionText}</figcaption>
+          <figcaption className="text-sm mt-2 text-black/60">{value.captionText}</figcaption>
         )}
       </figure>
     ) : null,
@@ -69,6 +69,13 @@ export default function ProjectOverlay({ open, project, onClose }) {
   const cachedProject = useRef(null)
   if (project) cachedProject.current = project
   const p = cachedProject.current
+
+  const [titleRevealed, setTitleRevealed] = useState(false)
+  useEffect(() => {
+    if (!open) { setTitleRevealed(false); return }
+    const t = setTimeout(() => setTitleRevealed(true), 1000)
+    return () => clearTimeout(t)
+  }, [open])
 
   const [slideIndex, setSlideIndex] = useState(0)
   const trackRef = useRef(null)
@@ -130,7 +137,7 @@ export default function ProjectOverlay({ open, project, onClose }) {
   }, [vimeoHtml])
 
   return (
-    <ContentOverlay open={open} onClose={onClose}>
+    <ContentOverlay open={open} onClose={onClose} light>
       {p && (
         <div
           key={p.title}
@@ -162,14 +169,21 @@ export default function ProjectOverlay({ open, project, onClose }) {
             </div>
           )}
 
-          <div className="relative z-10 text-white py-20 [&>*:nth-child(2)]:mt-[100vh]">
+          <div className="relative z-10 text-black py-20">
 
-          {/* Title */}
-          <div className="max-w-7xl mx-auto px-6 mb-12">
+          {/* Title — starts below hero (100vh), animates up to 60vh after 1s */}
+          <div
+            className="max-w-7xl mx-auto px-6"
+            style={{
+              marginTop: titleRevealed ? '60vh' : '100vh',
+              marginBottom: '15vh',
+              transition: titleRevealed ? 'margin-top 700ms ease-out' : 'none',
+            }}
+          >
             {p.category && (
-              <p className="text-2xl mb-4 [text-shadow:0_1px_4px_rgba(0,0,0,0.4)]">{CATEGORY_LABELS[p.category] ?? p.category}</p>
+              <p className="text-white text-2xl mb-4 [text-shadow:0_1px_4px_rgba(0,0,0,0.4)]">{CATEGORY_LABELS[p.category] ?? p.category}</p>
             )}
-            <h1 className="text-6xl md:text-8xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,0.4)]">{p.title}</h1>
+            <h1 className="text-white text-6xl md:text-8xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,0.4)]">{p.title}</h1>
           </div>
 
           {/* Vimeo embed — mounted once via ref to prevent iframe reload on re-renders */}
@@ -195,18 +209,18 @@ export default function ProjectOverlay({ open, project, onClose }) {
                       <img
                         src={img.url}
                         alt={img.alt || ''}
-                        className="w-full h-auto block"
+                        className="w-full object-contain block max-h-[80vh]"
                       />
                     </div>
                   ))}
                 </div>
               </div>
               {p.gallery.length > 1 && (
-                <div className="flex items-center justify-between px-6 mt-5">
+                <div className="flex items-center justify-center gap-3 px-6 mt-5">
                   <button
                     onClick={() => goToSlide(Math.max(0, slideIndex - 1))}
                     disabled={slideIndex === 0}
-                    className="text-white disabled:opacity-20 transition-opacity"
+                    className="text-black disabled:opacity-20 transition-opacity"
                   >
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="15 18 9 12 15 6" />
@@ -217,14 +231,14 @@ export default function ProjectOverlay({ open, project, onClose }) {
                       <button
                         key={i}
                         onClick={() => goToSlide(i)}
-                        className={`w-2 h-2 rounded-full transition-all ${i === slideIndex ? 'bg-white scale-125' : 'bg-white/30'}`}
+                        className={`w-2 h-2 rounded-full transition-all ${i === slideIndex ? 'bg-black scale-125' : 'bg-black/30'}`}
                       />
                     ))}
                   </div>
                   <button
                     onClick={() => goToSlide(Math.min(p.gallery.length - 1, slideIndex + 1))}
                     disabled={slideIndex === p.gallery.length - 1}
-                    className="text-white disabled:opacity-20 transition-opacity"
+                    className="text-black disabled:opacity-20 transition-opacity"
                   >
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />

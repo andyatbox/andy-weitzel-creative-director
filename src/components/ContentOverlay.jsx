@@ -1,6 +1,6 @@
 import { useRef, useLayoutEffect } from 'react'
 
-export default function ContentOverlay({ open, onClose, children }) {
+export default function ContentOverlay({ open, onClose, children, light = false }) {
   const scrollRef = useRef(null)
 
   useLayoutEffect(() => {
@@ -13,22 +13,26 @@ export default function ContentOverlay({ open, onClose, children }) {
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-500 ${
         open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`}
+      } ${light ? 'bg-white' : ''}`}
     >
-      {/* Backdrop tint — delayed until after content fade-in completes */}
-      <div
-        className={`absolute inset-0 transition-all duration-500 ${
-          open ? 'bg-black/55' : 'bg-black/0'
-        }`}
-        style={{ transitionDelay: open ? '850ms' : '0ms' }}
-      />
-      {/* Backdrop blur — delayed until after content fade-in completes */}
-      <div
-        className={`absolute inset-0 transition-all duration-500 ${
-          open ? 'backdrop-blur-md' : 'backdrop-blur-none'
-        }`}
-        style={{ transitionDelay: open ? '850ms' : '0ms' }}
-      />
+      {!light && (
+        <>
+          {/* Backdrop tint — delayed until after content fade-in completes */}
+          <div
+            className={`absolute inset-0 transition-all duration-500 ${
+              open ? 'bg-black/55' : 'bg-black/0'
+            }`}
+            style={{ transitionDelay: open ? '850ms' : '0ms' }}
+          />
+          {/* Backdrop blur — delayed until after content fade-in completes */}
+          <div
+            className={`absolute inset-0 transition-all duration-500 ${
+              open ? 'backdrop-blur-md' : 'backdrop-blur-none'
+            }`}
+            style={{ transitionDelay: open ? '850ms' : '0ms' }}
+          />
+        </>
+      )}
 
       {/* Close button — absolute within fixed parent, above scrollable content */}
       <button
