@@ -9,6 +9,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 import state from '../state'
 import { GRID_COLS } from '../config'
 import RadialRGBShiftShader from '../shaders/RadialRGBShiftShader'
+import introImageUrl from '../assets/intro.jpg'
 
 // useThreeScene wires the Three.js scene to a <canvas> ref.
 // It returns actionsRef, an object of imperative methods (navClick, zoomTo,
@@ -40,8 +41,10 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
     renderer.setSize(state.W, state.H)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setClearColor(0x000000, 1)
+    renderer.autoClear = false
 
     const scene = new THREE.Scene()
+    const introScene = new THREE.Scene()
     const camera = new THREE.OrthographicCamera(
       -state.W / 2, state.W / 2,
       state.H / 2, -state.H / 2,
@@ -66,6 +69,67 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
 
     const items = []
     const raycaster = new THREE.Raycaster()
+
+    // --- Intro plane — single plane, shader-based RGB split via UV offsets ---
+    const introMat = new THREE.ShaderMaterial({
+      uniforms: {
+        map: { value: null },
+        mapRepeat: { value: new THREE.Vector2(1, 1) },
+        mapOffset: { value: new THREE.Vector2(0, 0) },
+        rgbShift: { value: new THREE.Vector2(0, 0) },
+        opacity: { value: 1.0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D map;
+        uniform vec2 mapRepeat;
+        uniform vec2 mapOffset;
+        uniform vec2 rgbShift;
+        uniform float opacity;
+        varying vec2 vUv;
+        void main() {
+          vec2 base = vUv * mapRepeat + mapOffset;
+          float r = texture2D(map, base + rgbShift).r;
+          float g = texture2D(map, base).g;
+          float b = texture2D(map, base - rgbShift).b;
+          gl_FragColor = vec4(r, g, b, opacity);
+        }
+      `,
+      depthTest: false,
+      transparent: true,
+    })
+    const introPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), introMat)
+    introScene.add(introPlane)
+    let introTexData = null
+
+    new THREE.TextureLoader().load(introImageUrl, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace
+      introTexData = { tex, imgW: tex.image.width, imgH: tex.image.height }
+      introMat.uniforms.map.value = tex
+    })
+
+    let introAlpha = 1.0
+    let introAlphaTarget = 1.0
+    actionsRef.current.showIntro = () => { introAlphaTarget = 1.0 }
+    actionsRef.current.hideIntro = () => { introAlphaTarget = 0.0 }
+
+    // Bottom vignette — gradient plane rendered in the main scene, behind text (z=50)
+    const bottomGradientMat = new THREE.ShaderMaterial({
+      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `varying vec2 vUv; void main() { float a = pow(1.0 - vUv.y, 0.8); gl_FragColor = vec4(0.0, 0.0, 0.0, a); }`,
+      transparent: true,
+      depthWrite: false,
+    })
+    const bottomGradientPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), bottomGradientMat)
+    bottomGradientPlane.position.z = 50
+    scene.add(bottomGradientPlane)
+
     const pointer = new THREE.Vector2(-10, -10)
 
     // --- Actions (called by React UI buttons and by the raycaster click handler) ---
@@ -99,7 +163,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       state.preZoomTargetY = state.targetY
       state.targetX = x
       state.targetY = y
-      state.targetZoomVal = 0.99
+      state.targetZoomVal = 1.0
       state.targetEffectIntensity = 0.0
       state.targetLetterRotation = Math.PI / 4
       state.targetMouseX = 0
@@ -219,10 +283,12 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
               itemObj.texData = texData
             })
 
-            // 3D extruded text
+            // 3D extruded text — added to scene directly (not item group) so it can be
+            // repositioned each frame as a single shared label at the viewport bottom-center
             const textGroup = new THREE.Group()
-            textGroup.position.z = 50
-            group.add(textGroup)
+            textGroup.position.z = 100
+            textGroup.visible = false
+            scene.add(textGroup)
 
             const lines = wrapTitle(itemData.title.toUpperCase())
             const lineHeight = 1.3
@@ -231,7 +297,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
 
             lines.forEach((line, lineIndex) => {
               let currentX = 0
-              const lineItems = []
+              const lineMeshes = []
 
               for (let j = 0; j < line.length; j++) {
                 const char = line[j]
@@ -265,41 +331,25 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
                 )
                 mesh.position.set(currentX + charWidth / 2, -(lineIndex * lineHeight), 0)
                 textGroup.add(mesh)
-                lineItems.push({ mesh, x: currentX + charWidth / 2 })
+                lineMeshes.push(mesh)
                 textMeshes.push(mesh)
                 currentX += charWidth + letterSpacing + customKerning
               }
 
+              // Center this line around x=0
+              if (lineMeshes.length > 0) {
+                const halfWidth = (currentX - letterSpacing) / 2
+                lineMeshes.forEach(m => { m.position.x -= halfWidth })
+              }
             })
 
-            // Anchor last line's baseline at y=0 so text grows upward from the bottom
+            // Anchor bottom line at y=0 so text grows upward
             textGroup.children.forEach(mesh => {
               mesh.position.y += (lines.length - 1) * lineHeight
             })
 
-            // Background plane sized to the text block + padding, sits behind the glyphs
-            const textBox = new THREE.Box3()
-            textMeshes.forEach(mesh => {
-              mesh.geometry.computeBoundingBox()
-              const meshBox = mesh.geometry.boundingBox.clone()
-              meshBox.translate(mesh.position)
-              textBox.union(meshBox)
-            })
-            const padX = 0.8
-            const padY = 0.5
-            const bgW = (textBox.max.x - textBox.min.x) + padX * 2
-            const bgH = (textBox.max.y - textBox.min.y) + padY * 2
-            const bgCX = (textBox.max.x + textBox.min.x) / 2
-            const bgCY = (textBox.max.y + textBox.min.y) / 2
-            const textBgPlane = new THREE.Mesh(
-              new THREE.PlaneGeometry(bgW, bgH),
-              new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.65, depthWrite: false })
-            )
-            textBgPlane.position.set(bgCX, bgCY, -0.1)
-            textGroup.add(textBgPlane)
-
             const itemObj = {
-              group, baseMesh, planes, textGroup, textMeshes, textBgPlane,
+              group, baseMesh, planes, textGroup, textMeshes,
               gx, gy, colIndex: col, data: itemData, texData: null,
               hoverScale: 1.0, isHovered: false,
               colRows,
@@ -368,6 +418,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
           actionsRef.current.unzoom?.()
           return
         }
+        if (scrollDisabledRef?.current) return
         // Recalculate pointer from tap position — pointermove may not have fired on touch
         pointer.x = (e.clientX / window.innerWidth) * 2 - 1
         pointer.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -479,9 +530,53 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       camera.position.x = state.currentCamX + state.mouseX * state.W * 0.10
       camera.position.y = state.currentCamY + state.mouseY * state.H * 0.10
 
+      // Bottom vignette — tracks camera, sits behind text at z=50
+      const gradH = viewH * 0.25
+      bottomGradientPlane.scale.set(viewW, gradH, 1)
+      bottomGradientPlane.position.x = camera.position.x
+      bottomGradientPlane.position.y = camera.position.y - viewH / 2 + gradH / 2
+
+      // Animate intro plane in/out
+      introAlpha += (introAlphaTarget - introAlpha) * 0.06
+      if (Math.abs(introAlpha - introAlphaTarget) < 0.001) introAlpha = introAlphaTarget
+      introMat.uniforms.opacity.value = introAlpha
+      introPlane.visible = introAlpha > 0.001
+
+      // Intro: subtle mouse parallax + shader-based RGB split
+      const introBaseX = state.currentCamX + state.mouseX * state.W * 0.03
+      const introBaseY = state.currentCamY + state.mouseY * state.H * 0.03
+      const planeW = viewW * 1.15
+      const planeH = viewH * 1.15
+      introPlane.position.set(introBaseX, introBaseY, 0)
+      introPlane.scale.set(planeW, planeH, 1)
+
+      // RGB shift in UV space (world-space shift converted to fraction of plane size)
+      introMat.uniforms.rgbShift.value.set(
+        (state.mouseX * state.W * 0.005) / planeW,
+        (state.mouseY * state.H * 0.005) / planeH,
+      )
+
+      if (introTexData) {
+        const aspectPlane = state.W / state.H
+        const aspectImage = introTexData.imgW / introTexData.imgH
+        if (aspectPlane > aspectImage) {
+          const scale = aspectImage / aspectPlane
+          introMat.uniforms.mapRepeat.value.set(1, scale)
+          introMat.uniforms.mapOffset.value.set(0, (1 - scale) / 2)
+        } else {
+          const scale = aspectPlane / aspectImage
+          introMat.uniforms.mapRepeat.value.set(scale, 1)
+          introMat.uniforms.mapOffset.value.set((1 - scale) / 2, 0)
+        }
+      }
+
       raycaster.setFromCamera(pointer, camera)
       const intersects = raycaster.intersectObjects(items.map(i => i.baseMesh))
       const hoveredMesh = intersects.length > 0 ? intersects[0].object : null
+
+      const fontSize = Math.min(state.W, state.H) * 0.04
+      let labelItem = null
+      let minLabelDist = Infinity
 
       items.forEach(item => {
         const dx = item.group.position.x - state.currentCamX
@@ -536,22 +631,31 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
           }
         }
 
-        if (item.textGroup) {
-          const fontSize = Math.min(state.W, state.H) * 0.04
-          item.textGroup.scale.set(fontSize, fontSize, 1)
-          item.textGroup.position.x = -state.W * 0.5 + fontSize * 1.4 + dx * 0.12 - state.mouseX * state.W * 0.07
-          item.textGroup.position.y = -state.H * 0.5 + fontSize * 1.4 + dy * 0.12 - state.mouseY * state.H * 0.07
-
-          if (item.textBgPlane) item.textBgPlane.visible = !state.isZoomed
-
-          item.textMeshes.forEach(mesh => {
-            mesh.rotation.x += (state.targetLetterRotation - mesh.rotation.x) * 0.08
-            mesh.rotation.y += (state.targetLetterRotation - mesh.rotation.y) * 0.08
-          })
+        // Track which item in the active column is closest to camera center
+        if (item.colIndex === state.currentActiveCol) {
+          const distSq = dx * dx + dy * dy
+          if (distSq < minLabelDist) { minLabelDist = distSq; labelItem = item }
         }
+
+        // Hide all labels — the active one is shown after this loop
+        if (item.textGroup) item.textGroup.visible = false
       })
 
+      // Position and show the single shared label at viewport bottom-center
+      if (labelItem?.textGroup && !state.isZoomed) {
+        const tg = labelItem.textGroup
+        tg.visible = true
+        tg.scale.set(fontSize, fontSize, 1)
+        tg.position.set(camera.position.x, camera.position.y - viewH / 2 + fontSize * 4, 100)
+        labelItem.textMeshes.forEach(mesh => {
+          mesh.rotation.x += (state.targetLetterRotation - mesh.rotation.x) * 0.08
+          mesh.rotation.y += (state.targetLetterRotation - mesh.rotation.y) * 0.08
+        })
+      }
+
       composer.render()
+      renderer.setRenderTarget(null)
+      renderer.render(introScene, camera)
     }
 
     animate()

@@ -1,19 +1,58 @@
-import { useRef, useLayoutEffect } from 'react'
+import { useRef, useLayoutEffect, useEffect } from 'react'
 
-export default function ContentOverlay({ open, onClose, children, light = false }) {
+export default function ContentOverlay({ open, onClose, children, light = false, onScroll }) {
   const scrollRef = useRef(null)
+  const targetScrollRef = useRef(0)
+  const currentScrollRef = useRef(0)
+  const rafRef = useRef(null)
+  const onScrollRef = useRef(onScroll)
+  useEffect(() => { onScrollRef.current = onScroll }, [onScroll])
 
   useLayoutEffect(() => {
     if (open && scrollRef.current) {
       scrollRef.current.scrollTop = 0
+      targetScrollRef.current = 0
+      currentScrollRef.current = 0
     }
   }, [open])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const onWheel = (e) => {
+      e.preventDefault()
+      const delta = e.deltaMode === 1 ? e.deltaY * 20 : e.deltaY
+      const max = el.scrollHeight - el.clientHeight
+      targetScrollRef.current = Math.max(0, Math.min(max, targetScrollRef.current + delta))
+    }
+
+    const tick = () => {
+      const diff = targetScrollRef.current - currentScrollRef.current
+      if (Math.abs(diff) > 0.5) {
+        currentScrollRef.current += diff * 0.07
+      } else {
+        currentScrollRef.current = targetScrollRef.current
+      }
+      el.scrollTop = currentScrollRef.current
+      onScrollRef.current?.(currentScrollRef.current)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    rafRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
 
   return (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-500 ${
         open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      } ${light ? 'bg-white' : ''}`}
+      }`}
     >
       {!light && (
         <>

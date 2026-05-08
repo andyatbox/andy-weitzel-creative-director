@@ -43,13 +43,14 @@ export default function App() {
     activeCol: 1,
     isZoomed: false,
     menuOpen: false,
-    loading: true,
+    loading: false,
     activeProject: null,
+    activeNav: 'intro',
   })
 
   // Passed as a ref so scroll/drag handlers can check it without re-running the effect
   const scrollDisabledRef = useRef(false)
-  scrollDisabledRef.current = cvOpen || contactOpen || !!uiState.activeProject
+  scrollDisabledRef.current = cvOpen || contactOpen || !!uiState.activeProject || uiState.activeNav === 'intro'
 
   const actionsRef = useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledRef)
 
@@ -68,26 +69,47 @@ export default function App() {
         }`}
       />
 
-      <Logo loading={uiState.loading} />
+      <Logo />
 
       {/* Header — full width, always visible, above mobile menu */}
       <div
-        className={`fixed top-0 left-0 right-0 z-40 pointer-events-none border-b border-white transition-opacity duration-1000 ${
+        className={`fixed top-0 left-0 right-0 z-40 pointer-events-none border-b border-white flex items-stretch transition-opacity duration-1000 ${
           uiState.loading || uiState.isZoomed ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <p className="text-white text-xl leading-none text-center py-3">
+        <p className="text-white text-xl leading-none py-3 pl-[30px] pr-6 hidden md:flex items-center flex-shrink-0">
           Andy Weitzel&nbsp;&nbsp;—&nbsp;&nbsp;Creative Director
         </p>
+        <div className={`absolute left-1/2 -translate-x-1/2 flex items-stretch transition-opacity duration-500 ${
+          uiState.activeNav === 'works' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}>
+          <button
+            onClick={() => actionsRef.current.navClick?.(1)}
+            className={`ui-element text-xl leading-none py-3 px-5 flex items-center transition-colors ${
+              uiState.activeCol === 1 ? 'bg-white text-black' : 'text-white'
+            }`}
+          >
+            Interactive
+          </button>
+          <button
+            onClick={() => actionsRef.current.navClick?.(0)}
+            className={`ui-element text-xl leading-none py-3 px-5 flex items-center transition-colors ${
+              uiState.activeCol === 0 ? 'bg-white text-black' : 'text-white'
+            }`}
+          >
+            Branding
+          </button>
+        </div>
       </div>
 
       <Navigation
-        activeCol={uiState.activeCol}
+        activeNav={uiState.activeNav}
         isZoomed={uiState.isZoomed}
         loading={uiState.loading}
         menuOpen={uiState.menuOpen}
-        onNavClick={(col) => actionsRef.current.navClick?.(col)}
         onMenuToggle={() => setUiState(s => ({ ...s, menuOpen: !s.menuOpen }))}
+        onIntroClick={() => { actionsRef.current.showIntro?.(); setUiState(s => ({ ...s, activeNav: 'intro' })) }}
+        onWorksClick={() => { actionsRef.current.hideIntro?.(); setUiState(s => ({ ...s, activeNav: 'works' })) }}
         onCvClick={() => setCvOpen(true)}
         onContactClick={() => setContactOpen(true)}
       />
@@ -226,9 +248,7 @@ export default function App() {
       />
 
       {/* Top gradient */}
-      <div className={`fixed top-0 left-0 w-full h-[25vh] z-20 pointer-events-none transition-opacity duration-1000 ${uiState.isZoomed ? 'opacity-0' : 'opacity-100'}`} style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 100%)' }} />
-      {/* Bottom gradient */}
-      <div className={`fixed bottom-0 left-0 w-full h-[25vh] z-20 pointer-events-none transition-opacity duration-1000 ${uiState.isZoomed ? 'opacity-0' : 'opacity-100'}`} style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%)' }} />
+      <div className={`fixed top-0 left-0 w-full h-[25vh] z-20 pointer-events-none transition-opacity duration-1000 ${uiState.isZoomed ? 'opacity-0' : 'opacity-100'}`} style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
 
       {/* Three.js renders into this canvas */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-10" />

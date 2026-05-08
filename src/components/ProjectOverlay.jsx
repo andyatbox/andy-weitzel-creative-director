@@ -23,7 +23,7 @@ const CATEGORY_LABELS = {
 const ptComponents = {
   types: {
     image: ({ value }) => value.src ? (
-      <figure className="my-8">
+      <figure>
         <img src={value.src} alt={value.altText || ''} className="w-full" />
         {value.captionText && (
           <figcaption className="text-sm mt-2 text-black/60">{value.captionText}</figcaption>
@@ -45,6 +45,14 @@ const ptComponents = {
       <blockquote className="border-l-2 border-white pl-6 my-6 text-2xl italic">{children}</blockquote>
     ),
   },
+  list: {
+    bullet: ({ children }) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
+    number: ({ children }) => <ol className="list-decimal pl-6 mb-4">{children}</ol>,
+  },
+  listItem: {
+    bullet: ({ children }) => <li className="text-2xl leading-relaxed mb-1">{children}</li>,
+    number: ({ children }) => <li className="text-2xl leading-relaxed mb-1">{children}</li>,
+  },
   marks: {
     link: ({ value, children }) => (
       <a href={value.href} className="underline" target="_blank" rel="noopener noreferrer">
@@ -61,6 +69,7 @@ const colPtComponents = {
     h2: ({ children }) => <h2 className="text-2xl mt-6 mb-3">{children}</h2>,
     h3: ({ children }) => <h3 className="text-2xl mt-4 mb-2">{children}</h3>,
     h4: ({ children }) => <h4 className="text-2xl mt-3 mb-1">{children}</h4>,
+    normal: ({ children }) => <p className="text-2xl leading-relaxed mb-4">{children}</p>,
   },
 }
 
@@ -69,6 +78,13 @@ export default function ProjectOverlay({ open, project, onClose }) {
   const cachedProject = useRef(null)
   if (project) cachedProject.current = project
   const p = cachedProject.current
+
+  const [heroHeight, setHeroHeight] = useState(window.innerHeight)
+  useEffect(() => {
+    const onResize = () => setHeroHeight(window.innerHeight)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const [titleRevealed, setTitleRevealed] = useState(false)
   useEffect(() => {
@@ -130,6 +146,13 @@ export default function ProjectOverlay({ open, project, onClose }) {
     if (next !== cur) setSlideIndex(next)
   }
 
+  const heroImgRef = useRef(null)
+  const handleScroll = (y) => {
+    if (heroImgRef.current) {
+      heroImgRef.current.style.transform = `translateY(${y * 0.5}px)`
+    }
+  }
+
   const vimeoHtml = useMemo(() => getVimeoHtml(p?.videoUrl), [p?.videoUrl])
   const vimeoRef = useRef(null)
   useEffect(() => {
@@ -137,29 +160,31 @@ export default function ProjectOverlay({ open, project, onClose }) {
   }, [vimeoHtml])
 
   return (
-    <ContentOverlay open={open} onClose={onClose} light>
+    <ContentOverlay open={open} onClose={onClose} light onScroll={handleScroll}>
       {p && (
         <div
           key={p.title}
           className={`relative transition-opacity duration-700 ${
             open ? 'opacity-100' : 'opacity-0'
           }`}
-          style={{ transitionDelay: open ? '150ms' : '0ms' }}
+          style={{ transitionDelay: '0ms' }}
         >
 
           {/* Hero — thumbnail, full viewport height, scrolls away with content */}
           {p.image && (
             <div
-              className="absolute top-0 left-0 w-full z-0"
-              style={{ height: 'var(--vh, 100vh)' }}
+              className="absolute top-0 left-0 w-full z-0 overflow-hidden"
+              style={{ height: heroHeight }}
             >
               <img
+                ref={heroImgRef}
                 src={p.image}
                 alt={p.title}
                 className="w-full h-full object-cover"
+                style={{ willChange: 'transform' }}
               />
               {/* Scroll-down indicator */}
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none">
+              <div className="absolute bottom-10 right-10 pointer-events-none">
                 <div className="w-[50px] h-[50px] rounded-full blur-bg shadow-sm text-black flex items-center justify-center animate-bounce">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="6 9 12 15 18 9" />
@@ -170,14 +195,16 @@ export default function ProjectOverlay({ open, project, onClose }) {
           )}
 
           <div className="relative z-10 text-black py-20">
+            {/* White background starts below the hero — keeps the hero area transparent during fade-in */}
+            <div className="absolute left-0 right-0 bottom-0 bg-white -z-10" style={{ top: heroHeight }} />
 
-          {/* Title — starts below hero (100vh), animates up to 60vh after 1s */}
+          {/* Title — starts below hero (100vh), animates up to 70vh after 1s */}
           <div
             className="max-w-7xl mx-auto px-6"
             style={{
-              marginTop: titleRevealed ? '60vh' : '100vh',
-              marginBottom: '15vh',
-              transition: titleRevealed ? 'margin-top 700ms ease-out' : 'none',
+              marginTop: titleRevealed ? '70vh' : '100vh',
+              marginBottom: '25vh',
+              transition: titleRevealed ? 'margin-top 1100ms cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
             }}
           >
             {p.category && (
@@ -251,14 +278,14 @@ export default function ProjectOverlay({ open, project, onClose }) {
 
           {/* Body */}
           {p.body?.length > 0 && (
-            <div className="max-w-4xl mx-auto px-6 mb-12">
+            <div className="max-w-4xl mx-auto px-6 py-4 mb-12">
               <PortableText value={p.body} components={ptComponents} />
             </div>
           )}
 
           {/* Columns content */}
           {p.columnsContent?.length > 0 && (
-            <div className="max-w-7xl mx-auto px-6 space-y-12">
+            <div className="max-w-7xl mx-auto px-6 py-4 space-y-12">
               {p.columnsContent.map((group, i) => (
                 <div
                   key={group._key || i}
