@@ -5,6 +5,8 @@ import Logo from './components/Logo'
 import Navigation from './components/Navigation'
 import ContentOverlay from './components/ContentOverlay'
 import ProjectOverlay from './components/ProjectOverlay'
+import IntroTypewriter from './components/IntroTypewriter'
+import ProjectMenu from './components/ProjectMenu'
 import './App.css'
 
 export default function App() {
@@ -52,7 +54,8 @@ export default function App() {
   const scrollDisabledRef = useRef(false)
   scrollDisabledRef.current = cvOpen || contactOpen || !!uiState.activeProject || uiState.activeNav === 'intro'
 
-  const actionsRef = useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledRef)
+  const menuRef = useRef(null)
+  const actionsRef = useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledRef, menuRef)
 
   return (
     <div className="w-full overflow-hidden bg-black touch-none select-none custom-font" style={{ height: 'var(--vh, 100vh)' }}>
@@ -77,7 +80,7 @@ export default function App() {
           uiState.loading || uiState.isZoomed ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <p className="text-white text-xl leading-none py-3 pl-[30px] pr-6 hidden md:flex items-center flex-shrink-0">
+        <p className="text-white text-xl leading-none py-3 pl-[42px] pr-6 hidden md:flex items-center flex-shrink-0">
           Andy Weitzel&nbsp;&nbsp;—&nbsp;&nbsp;Creative Director
         </p>
         <div className={`absolute left-1/2 -translate-x-1/2 flex items-stretch transition-opacity duration-500 ${
@@ -247,8 +250,18 @@ export default function App() {
         onClose={() => actionsRef.current.unzoom?.()}
       />
 
+      <ProjectMenu
+        ref={menuRef}
+        items={portfolios ? portfolios[uiState.activeCol] : []}
+        activeCol={uiState.activeCol}
+        onItemClick={(idx) => actionsRef.current.scrollToRow?.(idx, uiState.activeCol)}
+        visible={uiState.activeNav === 'works' && !uiState.isZoomed && !uiState.loading}
+      />
+
+      <IntroTypewriter active={uiState.activeNav === 'intro'} />
+
       {/* Top gradient */}
-      <div className={`fixed top-0 left-0 w-full h-[25vh] z-20 pointer-events-none transition-opacity duration-1000 ${uiState.isZoomed ? 'opacity-0' : 'opacity-100'}`} style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
+      <div className={`fixed top-0 left-0 w-full h-[25vh] z-20 pointer-events-none transition-opacity duration-1000 ${uiState.isZoomed || uiState.activeNav === 'intro' ? 'opacity-0' : 'opacity-100'}`} style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
 
       {/* Three.js renders into this canvas */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-10" />

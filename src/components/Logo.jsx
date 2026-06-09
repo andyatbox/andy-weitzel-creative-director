@@ -7,7 +7,7 @@ export default function Logo() {
         left: '30px',
         width: '15vw',
         minWidth: '120px',
-        maxWidth: '190px',
+        maxWidth: '175px',
       }}
     >
       <svg

@@ -66,7 +66,7 @@ export default function Navigation({ activeNav, isZoomed, loading, menuOpen, onM
         }`}
       >
         <div className="absolute inset-0 bg-black/55 backdrop-blur-md" />
-        <div className="relative z-10 flex flex-col items-start gap-4 pt-[120px] pl-[30px]">
+        <div className="relative z-10 flex flex-col items-start gap-4 pt-[150px] pl-[30px]">
           {TOP_NAV_ITEMS.map((item) => {
             const isActive = item.type === activeNav
             return (

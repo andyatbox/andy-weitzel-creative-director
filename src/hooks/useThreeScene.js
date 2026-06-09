@@ -14,7 +14,7 @@ import introImageUrl from '../assets/intro.jpg'
 // useThreeScene wires the Three.js scene to a <canvas> ref.
 // It returns actionsRef, an object of imperative methods (navClick, zoomTo,
 // unzoom) that both the animation loop and React UI buttons can call.
-export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledRef) {
+export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledRef, menuRef) {
   const actionsRef = useRef({})
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
     state.W = window.innerWidth
     state.H = window.innerHeight
     const isMobile = state.W < 768
-    const GAP = isMobile ? 40 : 160
+    const GAP = isMobile ? 5 : 160
     state.cellW = state.W + GAP
     state.cellH = state.H + GAP
 
@@ -40,7 +40,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
     })
     renderer.setSize(state.W, state.H)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setClearColor(0x000000, 1)
+    renderer.setClearColor(0xFFFFFF, 1)
     renderer.autoClear = false
 
     const scene = new THREE.Scene()
@@ -78,6 +78,8 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         mapOffset: { value: new THREE.Vector2(0, 0) },
         rgbShift: { value: new THREE.Vector2(0, 0) },
         opacity: { value: 1.0 },
+        time: { value: 0.0 },
+        glitchIntensity: { value: 0.0 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -92,12 +94,25 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         uniform vec2 mapOffset;
         uniform vec2 rgbShift;
         uniform float opacity;
+        uniform float time;
+        uniform float glitchIntensity;
         varying vec2 vUv;
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
         void main() {
           vec2 base = vUv * mapRepeat + mapOffset;
           float r = texture2D(map, base + rgbShift).r;
           float g = texture2D(map, base).g;
           float b = texture2D(map, base - rgbShift).b;
+
+          // Film grain
+          float grain = hash(vUv + vec2(fract(time * 13.7), fract(time * 7.3))) * 2.0 - 1.0;
+          float noiseAmt = 0.16 + glitchIntensity * 0.28;
+          r = clamp(r + grain * noiseAmt, 0.0, 1.0);
+          g = clamp(g + grain * noiseAmt, 0.0, 1.0);
+          b = clamp(b + grain * noiseAmt, 0.0, 1.0);
+
           gl_FragColor = vec4(r, g, b, opacity);
         }
       `,
@@ -114,10 +129,15 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       introMat.uniforms.map.value = tex
     })
 
-    let introAlpha = 1.0
+    let introAlpha = 0.0
     let introAlphaTarget = 1.0
     actionsRef.current.showIntro = () => { introAlphaTarget = 1.0 }
     actionsRef.current.hideIntro = () => { introAlphaTarget = 0.0 }
+
+    // VHS glitch state
+    let glitchNextTime = performance.now() + 5000 + Math.random() * 5000
+    let glitchSequence = []  // [{start, duration, x, y}]
+    let glitchIntensityVal = 0.0
 
     // Bottom vignette — gradient plane rendered in the main scene, behind text (z=50)
     const bottomGradientMat = new THREE.ShaderMaterial({
@@ -184,6 +204,19 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       state.targetLetterRotation = 0
 
       setUiState(s => ({ ...s, isZoomed: false, activeProject: null }))
+    }
+
+    actionsRef.current.scrollToRow = (listIdx, fromCol) => {
+      if (fromCol !== undefined && fromCol !== state.currentActiveCol) return
+      const col = state.currentActiveCol
+      const colRows = portfolios[col].length
+      const halfRows = Math.floor(colRows / 2)
+      const virtualRow = halfRows - state.targetY / state.cellH
+      const snapped = Math.round(virtualRow)
+      let delta = listIdx - ((snapped % colRows + colRows) % colRows)
+      if (delta > colRows / 2) delta -= colRows
+      if (delta < -colRows / 2) delta += colRows
+      state.targetY = (halfRows - (snapped + delta)) * state.cellH
     }
 
     // --- Texture loaders ---
@@ -438,7 +471,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       state.W = window.innerWidth
       state.H = window.innerHeight
       const isMobile = state.W < 768
-      const GAP = isMobile ? 20 : 80
+      const GAP = isMobile ? 5 : 160
 
       const prevCellW = state.cellW
       const prevCellH = state.cellH
@@ -536,9 +569,11 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       bottomGradientPlane.position.x = camera.position.x
       bottomGradientPlane.position.y = camera.position.y - viewH / 2 + gradH / 2
 
-      // Animate intro plane in/out
-      introAlpha += (introAlphaTarget - introAlpha) * 0.06
-      if (Math.abs(introAlpha - introAlphaTarget) < 0.001) introAlpha = introAlphaTarget
+      // Animate intro plane in/out — only once texture is loaded
+      if (introMat.uniforms.map.value !== null) {
+        introAlpha += (introAlphaTarget - introAlpha) * 0.06
+        if (Math.abs(introAlpha - introAlphaTarget) < 0.001) introAlpha = introAlphaTarget
+      }
       introMat.uniforms.opacity.value = introAlpha
       introPlane.visible = introAlpha > 0.001
 
@@ -550,10 +585,36 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       introPlane.position.set(introBaseX, introBaseY, 0)
       introPlane.scale.set(planeW, planeH, 1)
 
+      // VHS glitch — random RGB split bursts every 5-10 seconds
+      const now = performance.now()
+      if (introAlpha > 0.5 && now >= glitchNextTime) {
+        glitchNextTime = now + 5000 + Math.random() * 5000
+        let offset = 0
+        const flashes = 2 + Math.floor(Math.random() * 3)
+        for (let i = 0; i < flashes; i++) {
+          offset += Math.random() * 80
+          glitchSequence.push({
+            start: now + offset,
+            duration: 40 + Math.random() * 60,
+            x: (Math.random() > 0.5 ? 1 : -1) * (0.03 + Math.random() * 0.05),
+            y: (Math.random() - 0.5) * 0.02,
+          })
+          offset += 30 + Math.random() * 70
+        }
+      }
+      glitchSequence = glitchSequence.filter(g => now < g.start + g.duration)
+      let glitchX = 0, glitchY = 0
+      glitchSequence.forEach(g => { if (now >= g.start) { glitchX = g.x; glitchY = g.y } })
+
+      const isGlitching = glitchX !== 0 || glitchY !== 0
+      glitchIntensityVal += ((isGlitching ? 1.0 : 0.0) - glitchIntensityVal) * (isGlitching ? 0.4 : 0.1)
+      introMat.uniforms.time.value = now * 0.001
+      introMat.uniforms.glitchIntensity.value = glitchIntensityVal
+
       // RGB shift in UV space (world-space shift converted to fraction of plane size)
       introMat.uniforms.rgbShift.value.set(
-        (state.mouseX * state.W * 0.005) / planeW,
-        (state.mouseY * state.H * 0.005) / planeH,
+        (state.mouseX * state.W * 0.005) / planeW + glitchX,
+        (state.mouseY * state.H * 0.005) / planeH + glitchY,
       )
 
       if (introTexData) {
@@ -574,7 +635,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       const intersects = raycaster.intersectObjects(items.map(i => i.baseMesh))
       const hoveredMesh = intersects.length > 0 ? intersects[0].object : null
 
-      const fontSize = Math.min(state.W, state.H) * 0.04
+      const fontSize = Math.min(state.W, state.H) * (state.W >= 768 ? 0.08 : 0.055)
       let labelItem = null
       let minLabelDist = Infinity
 
@@ -646,12 +707,15 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         const tg = labelItem.textGroup
         tg.visible = true
         tg.scale.set(fontSize, fontSize, 1)
-        tg.position.set(camera.position.x, camera.position.y - viewH / 2 + fontSize * 4, 100)
+        const labelOffset = state.W >= 768 ? fontSize * 2.5 : viewH * 0.20
+        tg.position.set(camera.position.x, camera.position.y - viewH / 2 + labelOffset, 100)
         labelItem.textMeshes.forEach(mesh => {
           mesh.rotation.x += (state.targetLetterRotation - mesh.rotation.x) * 0.08
           mesh.rotation.y += (state.targetLetterRotation - mesh.rotation.y) * 0.08
         })
       }
+
+      menuRef?.current?.update(state.currentCamY, state.cellH, state.H)
 
       composer.render()
       renderer.setRenderTarget(null)

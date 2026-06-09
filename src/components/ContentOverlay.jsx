@@ -28,6 +28,9 @@ export default function ContentOverlay({ open, onClose, children, light = false,
     }
 
     const tick = () => {
+      const max = el.scrollHeight - el.clientHeight
+      if (targetScrollRef.current > max) targetScrollRef.current = max
+      if (currentScrollRef.current > max) currentScrollRef.current = max
       const diff = targetScrollRef.current - currentScrollRef.current
       if (Math.abs(diff) > 0.5) {
         currentScrollRef.current += diff * 0.07
@@ -56,20 +59,8 @@ export default function ContentOverlay({ open, onClose, children, light = false,
     >
       {!light && (
         <>
-          {/* Backdrop tint — delayed until after content fade-in completes */}
-          <div
-            className={`absolute inset-0 transition-all duration-500 ${
-              open ? 'bg-black/55' : 'bg-black/0'
-            }`}
-            style={{ transitionDelay: open ? '850ms' : '0ms' }}
-          />
-          {/* Backdrop blur — delayed until after content fade-in completes */}
-          <div
-            className={`absolute inset-0 transition-all duration-500 ${
-              open ? 'backdrop-blur-md' : 'backdrop-blur-none'
-            }`}
-            style={{ transitionDelay: open ? '850ms' : '0ms' }}
-          />
+          <div className={`absolute inset-0 transition-all duration-500 ${open ? 'bg-black/55' : 'bg-black/0'}`} />
+          <div className={`absolute inset-0 transition-all duration-500 ${open ? 'backdrop-blur-md' : 'backdrop-blur-none'}`} />
         </>
       )}
 
