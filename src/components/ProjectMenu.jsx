@@ -4,10 +4,12 @@ const ProjectMenu = forwardRef(function ProjectMenu({ items, activeCol, onItemCl
   const slotRefs = useRef([])
 
   useImperativeHandle(ref, () => ({
-    update(camY, cellH, viewH) {
+    update(camY, cellH, viewH, isPortrait) {
       const n = items.length
       if (!n || !cellH) return
-      const itemH = viewH / 13
+      const menuHeight = isPortrait ? viewH * 0.4 : viewH
+      const itemH = isPortrait ? menuHeight / 7 : viewH / 13
+      const menuCenter = menuHeight / 2
       const halfRows = Math.floor(n / 2)
       const continuousRow = halfRows - camY / cellH
       const normRow = ((continuousRow % n) + n) % n
@@ -27,7 +29,7 @@ const ProjectMenu = forwardRef(function ProjectMenu({ items, activeCol, onItemCl
         let dist = i - normRow
         if (dist > n / 2) dist -= n
         if (dist < -n / 2) dist += n
-        el.style.top = `${viewH / 2 - itemH / 2 + dist * itemH}px`
+        el.style.top = `${menuCenter - itemH / 2 + dist * itemH}px`
         el.style.opacity = Math.max(0, 1 - Math.abs(dist) / alphaDist)
         const span = el.firstChild
         if (span) {
@@ -43,11 +45,11 @@ const ProjectMenu = forwardRef(function ProjectMenu({ items, activeCol, onItemCl
 
   return (
     <div
-      className={`fixed left-0 top-0 h-full z-20 w-full md:w-1/2 pointer-events-none overflow-hidden transition-opacity duration-700 ${
+      className={`fixed left-0 top-0 portrait:top-auto portrait:bottom-0 h-full portrait:h-[40%] z-20 w-full md:w-1/2 portrait:w-full pointer-events-none overflow-hidden transition-opacity duration-700 ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      {/* Horizontal gradient — 60% black on left, transparent on right */}
+      {/* Gradient backdrop */}
       <div
         className="absolute inset-0"
         style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%)' }}

@@ -405,6 +405,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
     let lastPointerY
 
     const handleWheel = (e) => {
+      e.preventDefault()
       if (state.isZoomed || scrollDisabledRef?.current) return
       state.targetY -= e.deltaY * (state.isTouchDevice ? 2.0 : 1.0)
       state.lastInputTime = Date.now()
@@ -502,7 +503,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
       })
     }
 
-    window.addEventListener('wheel', handleWheel, { passive: true })
+    window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('pointerdown', handlePointerDown)
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
@@ -702,8 +703,9 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         if (item.textGroup) item.textGroup.visible = false
       })
 
-      // Position and show the single shared label at viewport bottom-center
-      if (labelItem?.textGroup && !state.isZoomed) {
+      // Position and show the single shared label at viewport bottom-center (landscape only)
+      const isPortrait = state.W < state.H
+      if (labelItem?.textGroup && !state.isZoomed && !isPortrait) {
         const tg = labelItem.textGroup
         tg.visible = true
         tg.scale.set(fontSize, fontSize, 1)
@@ -715,7 +717,7 @@ export function useThreeScene(canvasRef, setUiState, portfolios, scrollDisabledR
         })
       }
 
-      menuRef?.current?.update(state.currentCamY, state.cellH, state.H)
+      menuRef?.current?.update(state.currentCamY, state.cellH, state.H, state.W < state.H)
 
       composer.render()
       renderer.setRenderTarget(null)

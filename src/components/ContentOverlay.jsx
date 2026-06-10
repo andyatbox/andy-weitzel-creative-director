@@ -27,6 +27,19 @@ export default function ContentOverlay({ open, onClose, children, light = false,
       targetScrollRef.current = Math.max(0, Math.min(max, targetScrollRef.current + delta))
     }
 
+    let touchY = 0
+    const onTouchStart = (e) => {
+      touchY = e.touches[0].clientY
+    }
+    const onTouchMove = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const dy = touchY - e.touches[0].clientY
+      touchY = e.touches[0].clientY
+      const max = el.scrollHeight - el.clientHeight
+      targetScrollRef.current = Math.max(0, Math.min(max, targetScrollRef.current + dy))
+    }
+
     const tick = () => {
       const max = el.scrollHeight - el.clientHeight
       if (targetScrollRef.current > max) targetScrollRef.current = max
@@ -43,10 +56,14 @@ export default function ContentOverlay({ open, onClose, children, light = false,
     }
 
     el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
       el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
       cancelAnimationFrame(rafRef.current)
     }
   }, [])
