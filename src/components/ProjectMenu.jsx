@@ -49,10 +49,15 @@ const ProjectMenu = forwardRef(function ProjectMenu({ items, activeCol, onItemCl
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      {/* Gradient backdrop */}
+      {/* Landscape: left-to-right gradient */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 portrait:hidden"
         style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%)' }}
+      />
+      {/* Portrait: bottom-to-top gradient */}
+      <div
+        className="absolute inset-0 landscape:hidden"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%)' }}
       />
 
       {/* Scrolling item list — positioned absolutely, driven each frame via update() */}
